@@ -1,0 +1,6 @@
+.env.local
+.venv
+parking_lots_raw.csv
+violations_raw.csv
+dist
+node_modules
