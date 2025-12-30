@@ -170,10 +170,14 @@ mock_parking_data = [
     }
 ]
 
-# 기상청 API에서 날씨 데이터 가져오기 (mock)
+# 기상청 API에서 날씨 데이터 가져오기 (mock -> shape 통일)
 def get_weather_data():
-    # 실제로는 기상청 API 호출
-    return {"temperature": 15, "precipitation": 0}
+    # TODO: 기상청 단기예보 API 연결 및 지역/위치별 데이터 매핑
+    return {
+        "temperature": 18,
+        "condition": "cloudy",
+        "precipitationProbability": 20,
+    }
 
 # Prophet 모델로 예측 생성
 def generate_prediction(parking_id: int, hours_ahead: int = 24):

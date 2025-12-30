@@ -213,7 +213,7 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 p-4">
-        <div className="max-w-lg mx-auto flex gap-2">
+        <div className="max-w-lg mx-auto flex flex-wrap gap-2">
           <Button
             variant={selectedFilter === 'all' ? 'default' : 'outline'}
             size="sm"
@@ -233,10 +233,8 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             size="sm"
             onClick={() => setSelectedFilter('nearby')}
           >
-            가까운 순
+            내 주변
           </Button>
-        </div>
-        <div className="max-w-lg mx-auto flex gap-2 mt-2">
           <Button
             variant={sortBy === 'distance' ? 'default' : 'outline'}
             size="sm"
