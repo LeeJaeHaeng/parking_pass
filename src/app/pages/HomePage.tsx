@@ -16,13 +16,13 @@ interface HomePageProps {
 type UserLocation = { lat: number; lon: number } | null;
 
 export default function HomePage({ onParkingSelect, onSearchClick }: HomePageProps) {
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'available' | 'nearby'>('all');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'nearby'>('all');
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>(mockParkingLots);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<UserLocation>(null);
   const [locError, setLocError] = useState<string | null>(null);
   const [weather, setWeather] = useState<{ temperature: number; condition: string; precipitationProbability: number } | null>(null);
-  const [sortBy, setSortBy] = useState<'distance' | 'availability' | 'congestion'>('distance');
+  const [sortBy, setSortBy] = useState<'congestion'>('congestion');
 
   useEffect(() => {
     const fetchParkingLots = async () => {
@@ -63,9 +63,7 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
   const getFilteredLots = () => {
     let filtered = [...parkingLots];
     
-    if (selectedFilter === 'available') {
-      filtered = filtered.filter(lot => lot.availableSpaces > 10);
-    } else if (selectedFilter === 'nearby') {
+    if (selectedFilter === 'nearby') {
       if (userLocation) {
         filtered = filtered.filter(lot => lot.distance < 1.5);
       } else {
@@ -96,8 +94,6 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
 
     // 정렬
     return filtered.sort((a, b) => {
-      if (sortBy === 'distance') return a.distance - b.distance;
-      if (sortBy === 'availability') return b.availableSpaces - a.availableSpaces;
       if (sortBy === 'congestion') {
         const rateA = a.availableSpaces / a.totalSpaces;
         const rateB = b.availableSpaces / b.totalSpaces;
@@ -222,32 +218,11 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             전체
           </Button>
           <Button
-            variant={selectedFilter === 'available' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedFilter('available')}
-          >
-            여유 있음
-          </Button>
-          <Button
             variant={selectedFilter === 'nearby' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedFilter('nearby')}
           >
-            내 주변
-          </Button>
-          <Button
-            variant={sortBy === 'distance' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSortBy('distance')}
-          >
-            거리순
-          </Button>
-          <Button
-            variant={sortBy === 'availability' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSortBy('availability')}
-          >
-            잔여순
+            내 주변(1.5km)
           </Button>
           <Button
             variant={sortBy === 'congestion' ? 'default' : 'outline'}
