@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CreditCard, Smartphone, Building2, CheckCircle2, X, Receipt } from 'lucide-react';
 import { mockParkingLots, mockVehicle } from '../data/mockData';
+import { api } from '../api';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
@@ -15,6 +16,7 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'mobile' | 'account'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const parking = mockParkingLots[0];
   const parkingFee = 5500;
@@ -24,15 +26,42 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
   const parkingStartTime = '14:30';
   const parkingEndTime = '16:13';
   const parkingDuration = '1시간 43분';
+  const durationMinutes = 103;
+
+  const getStoredUserId = () => {
+    if (typeof window === 'undefined') return undefined;
+    try {
+      const stored = window.localStorage.getItem('authUser');
+      if (!stored) return undefined;
+      const parsed = JSON.parse(stored);
+      return parsed?.id ? Number(parsed.id) : undefined;
+    } catch {
+      return undefined;
+    }
+  };
 
   const handlePayment = () => {
     setIsProcessing(true);
+    setError(null);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsComplete(true);
-    }, 2000);
+    // Simulate payment processing + API 기록
+    setTimeout(async () => {
+      try {
+        await api.createPayment({
+          parkingLotName: parking.name,
+          startTime: parkingStartTime,
+          endTime: parkingEndTime,
+          duration: durationMinutes,
+          fee: totalFee,
+          userId: getStoredUserId(),
+        });
+        setIsComplete(true);
+      } catch (e: any) {
+        setError(e?.message || '결제 기록 저장에 실패했습니다');
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 1000);
   };
 
   if (isComplete) {
@@ -83,18 +112,24 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto p-4 flex items-center justify-between">
-          <h1>결제</h1>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="max-w-lg mx-auto p-4 flex items-center justify-between">
+            <h1>결제</h1>
           <Button variant="ghost" size="sm" onClick={onComplete}>
             <X className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto p-4 space-y-4">
+          <div className="max-w-lg mx-auto p-4 space-y-4">
+        {error && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+            {error}
+          </div>
+        )}
+
         {/* Parking Summary */}
         <Card className="p-4">
           <h3 className="mb-4">주차 정보</h3>

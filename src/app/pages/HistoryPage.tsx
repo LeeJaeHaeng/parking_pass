@@ -1,15 +1,37 @@
-import { ArrowLeft, Calendar, MapPin, Clock, DollarSign, Download, Filter } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Calendar, Clock, DollarSign, Download, Filter } from 'lucide-react';
 import { mockParkingHistory } from '../data/mockData';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { api } from '../api';
+import { ParkingHistory } from '../types';
 
 interface HistoryPageProps {
   onBack: () => void;
 }
 
 export default function HistoryPage({ onBack }: HistoryPageProps) {
+  const [history, setHistory] = useState<ParkingHistory[]>(mockParkingHistory);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const stored = typeof window !== 'undefined' ? window.localStorage.getItem('authUser') : null;
+        const userId = stored ? Number(JSON.parse(stored).id) : undefined;
+        const data = await api.getHistory(userId);
+        setHistory(data);
+      } catch (e) {
+        setHistory(mockParkingHistory);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, []);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const month = date.getMonth() + 1;
@@ -18,24 +40,24 @@ export default function HistoryPage({ onBack }: HistoryPageProps) {
     return `${month}월 ${day}일 (${weekday})`;
   };
 
-  const totalCount = mockParkingHistory.length;
-  const totalSpent = mockParkingHistory.reduce((sum, item) => sum + item.fee, 0);
+  const totalCount = history.length;
+  const totalSpent = history.reduce((sum, item) => sum + item.fee, 0);
 
   const getMonthlyData = () => {
     const monthly: { [key: string]: { count: number; spent: number } } = {};
-    
-    mockParkingHistory.forEach(item => {
+
+    history.forEach(item => {
       const date = new Date(item.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
+
       if (!monthly[monthKey]) {
         monthly[monthKey] = { count: 0, spent: 0 };
       }
-      
+
       monthly[monthKey].count++;
       monthly[monthKey].spent += item.fee;
     });
-    
+
     return monthly;
   };
 
@@ -89,7 +111,7 @@ export default function HistoryPage({ onBack }: HistoryPageProps) {
 
         {/* History List */}
         <div className="space-y-3">
-          {mockParkingHistory.map((item) => (
+          {history.map((item) => (
             <Card key={item.id} className="p-4 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
@@ -154,6 +176,14 @@ export default function HistoryPage({ onBack }: HistoryPageProps) {
           <Download className="w-4 h-4 mr-2" />
           이용 내역 내보내기
         </Button>
+
+        {history.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <Download className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-gray-500">내역이 없습니다</p>
+            <p className="text-sm text-gray-400 mt-1">주차 후 결제하면 기록이 저장됩니다</p>
+          </div>
+        )}
       </div>
     </div>
   );

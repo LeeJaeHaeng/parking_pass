@@ -1,5 +1,7 @@
 .env.local
 .venv
+*.pyc
+*.db
 parking_lots_raw.csv
 violations_raw.csv
 dist

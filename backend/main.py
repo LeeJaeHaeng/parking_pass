@@ -83,6 +83,19 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+
+class PaymentHistory(Base):
+    __tablename__ = "payment_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True)
+    parking_lot_name = Column(String, nullable=False)
+    start_time = Column(String, nullable=True)
+    end_time = Column(String, nullable=True)
+    duration = Column(Integer, nullable=True)
+    fee = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
 # ===== Pydantic 모델 =====
 class ParkingLot(BaseModel):
     id: int
@@ -119,6 +132,28 @@ class Token(BaseModel):
     user_id: int
     email: EmailStr
     name: Optional[str] = None
+
+
+class PaymentCreate(BaseModel):
+    parking_lot_name: str
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    duration: Optional[int] = None
+    fee: int
+    user_id: Optional[int] = None
+
+
+class PaymentOut(BaseModel):
+    id: int
+    parkingLotName: str
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
+    duration: Optional[int] = None
+    fee: int
+    date: str
+
+    class Config:
+        orm_mode = True
 
 # Mock 데이터 (실제로는 DB에서 가져옴)
 mock_parking_data = [
@@ -220,6 +255,51 @@ def login_user(payload: UserLogin, db: Session = Depends(get_db)):
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+
+
+# ===== 결제/히스토리 =====
+@app.post("/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
+def create_payment(payload: PaymentCreate, db: Session = Depends(get_db)):
+    record = PaymentHistory(
+        user_id=payload.user_id,
+        parking_lot_name=payload.parking_lot_name,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        duration=payload.duration,
+        fee=payload.fee,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return PaymentOut(
+        id=record.id,
+        parkingLotName=record.parking_lot_name,
+        startTime=record.start_time,
+        endTime=record.end_time,
+        duration=record.duration,
+        fee=record.fee,
+        date=record.created_at.date().isoformat() if record.created_at else datetime.utcnow().date().isoformat(),
+    )
+
+
+@app.get("/history", response_model=List[PaymentOut])
+def get_history(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(PaymentHistory).order_by(PaymentHistory.created_at.desc()).limit(50)
+    if user_id:
+        query = query.filter(PaymentHistory.user_id == user_id)
+    items = query.all()
+    return [
+        PaymentOut(
+            id=rec.id,
+            parkingLotName=rec.parking_lot_name,
+            startTime=rec.start_time,
+            endTime=rec.end_time,
+            duration=rec.duration,
+            fee=rec.fee,
+            date=rec.created_at.date().isoformat() if rec.created_at else datetime.utcnow().date().isoformat(),
+        )
+        for rec in items
+    ]
 
 if __name__ == "__main__":
     import uvicorn

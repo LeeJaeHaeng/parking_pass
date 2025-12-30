@@ -18,6 +18,25 @@ export interface AuthResponse {
   name?: string;
 }
 
+export interface PaymentPayload {
+  parkingLotName: string;
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  fee: number;
+  userId?: number;
+}
+
+export interface PaymentRecord {
+  id: number;
+  parkingLotName: string;
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  fee: number;
+  date: string;
+}
+
 const normalizeParkingLot = (raw: any): ParkingLot => ({
   id: Number(raw.id) || Number(raw.external_id) || Number(raw.externalId) || raw.id,
   externalId: raw.external_id ?? raw.externalId,
@@ -147,6 +166,33 @@ export const api = {
       throw new Error(text || '로그인 실패');
     }
     return res.json();
+  },
+
+  async createPayment(payload: PaymentPayload): Promise<PaymentRecord> {
+    const res = await safeFetch(`${API_BASE_URL}/payments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parking_lot_name: payload.parkingLotName,
+        start_time: payload.startTime,
+        end_time: payload.endTime,
+        duration: payload.duration,
+        fee: payload.fee,
+        user_id: payload.userId,
+      }),
+    });
+    return res;
+  },
+
+  async getHistory(userId?: number): Promise<PaymentRecord[]> {
+    try {
+      const query = userId ? `?user_id=${userId}` : '';
+      const res = await safeFetch(`${API_BASE_URL}/history${query}`);
+      return res;
+    } catch (e) {
+      console.warn('Falling back to mock history:', e);
+      return (await import('./data/mockData')).mockParkingHistory as any;
+    }
   },
 };
 
