@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ArrowLeft, Search, MapPin, SlidersHorizontal, X } from 'lucide-react';
 import { mockParkingLots } from '../data/mockData';
+import { KakaoMap } from '../components/KakaoMap';
+import { Button as UIButton } from '../components/ui/button';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
@@ -164,6 +166,19 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
               </SheetContent>
             </Sheet>
           </div>
+        </div>
+      </div>
+
+      {/* Map preview of results */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-lg mx-auto p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>검색 결과 지도</span>
+            <UIButton variant="outline" size="sm" onClick={() => setSortBy('distance')}>
+              거리 우선 정렬
+            </UIButton>
+          </div>
+          <KakaoMap parkingLots={getFilteredAndSortedLots()} height="12rem" onMarkerClick={onParkingSelect} />
         </div>
       </div>
 
