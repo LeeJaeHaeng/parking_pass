@@ -70,10 +70,10 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
       setLoadingPred(true);
       try {
         const data = await api.getPredictions(parkingId, 24);
-        // recharts expects occupancyRate field already; api normalizes it
         setPredictionData(data as any);
       } catch (e) {
-        setPredictionData([]);
+        console.error("그래프 데이터 로드 실패:", e);
+        // 기존 데이터를 유지하여 그래프가 "사라지는" 현상 방지
       } finally {
         setLoadingPred(false);
       }
@@ -197,18 +197,18 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
               <TabsTrigger value="occupancy">점유율</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="hourly" className="mt-4 min-h-[200px]">
-              {loadingPred ? (
+            <TabsContent value="hourly" className="mt-4 min-h-[200px] relative">
+              {loadingPred && predictionData.length === 0 ? (
                 <div className="flex h-[200px] items-center justify-center text-sm text-gray-500 animate-pulse">
                   AI 예측 데이터를 분석 중입니다...
                 </div>
               ) : predictionData.length > 0 ? (
-                <div className="h-[200px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={predictionData.slice(0, 12)}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                <div className={`h-[200px] w-full transition-opacity duration-300 ${loadingPred ? 'opacity-50' : 'opacity-100'}`}>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={predictionData.slice(0, 12)} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                      <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
                       <Tooltip 
                         contentStyle={{ fontSize: 12, borderRadius: 8 }}
                         formatter={(value: any) => [`${value}%`, '점유율']}
@@ -219,9 +219,15 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
                         stroke="#3b82f6" 
                         strokeWidth={2}
                         dot={{ fill: '#3b82f6', r: 3 }}
+                        animationDuration={500}
                       />
                     </LineChart>
                   </ResponsiveContainer>
+                  {loadingPred && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-[1px]">
+                      <span className="text-xs font-medium text-blue-600 bg-white px-2 py-1 rounded-full shadow-sm">업데이트 중...</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex h-[200px] items-center justify-center text-sm text-gray-400 bg-gray-50 rounded border border-dashed border-gray-200">
@@ -233,18 +239,18 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
               )}
             </TabsContent>
             
-            <TabsContent value="occupancy" className="mt-4 min-h-[200px]">
-              {loadingPred ? (
+            <TabsContent value="occupancy" className="mt-4 min-h-[200px] relative">
+              {loadingPred && predictionData.length === 0 ? (
                 <div className="flex h-[200px] items-center justify-center text-sm text-gray-500 animate-pulse">
                   AI 예측 데이터를 분석 중입니다...
                 </div>
               ) : predictionData.length > 0 ? (
-                <div className="h-[200px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={predictionData.slice(0, 12)}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                <div className={`h-[200px] w-full transition-opacity duration-300 ${loadingPred ? 'opacity-50' : 'opacity-100'}`}>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <AreaChart data={predictionData.slice(0, 12)} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                      <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
                       <Tooltip 
                         contentStyle={{ fontSize: 12, borderRadius: 8 }}
                         formatter={(value: any) => [`${value}%`, '점유율']}
@@ -255,9 +261,15 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
                         stroke="#8b5cf6" 
                         fill="#8b5cf6" 
                         fillOpacity={0.3}
+                        animationDuration={500}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
+                  {loadingPred && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-[1px]">
+                      <span className="text-xs font-medium text-purple-600 bg-white px-2 py-1 rounded-full shadow-sm">업데이트 중...</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex h-[200px] items-center justify-center text-sm text-gray-400 bg-gray-50 rounded border border-dashed border-gray-200">

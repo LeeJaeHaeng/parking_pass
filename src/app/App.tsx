@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import ParkingDetailPage from './pages/ParkingDetailPage';
@@ -25,6 +25,11 @@ export default function App() {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('authUser') : null;
     return stored ? JSON.parse(stored) : null;
   });
+
+  // 페이지 전환 시 항상 최상단으로 스크롤
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage, selectedParkingId]);
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);

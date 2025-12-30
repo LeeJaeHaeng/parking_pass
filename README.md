@@ -92,11 +92,11 @@ Python 가상 환경 설정 후 의존성을 설치하고 서버를 실행합니
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:app --reload --port 5174
 ```
 
-- 서버 주소: `http://localhost:8000`
-- API 문서: `http://localhost:8000/docs`
+- 서버 주소: `http://localhost:5174`
+- API 문서: `http://localhost:5174/docs`
 
 ### 2. Frontend 실행
 
@@ -117,10 +117,10 @@ PC와 동일한 와이파이(Network)에 연결된 스마트폰에서 테스트�
 
 ### 1. Backend 실행 설정
 
-외부 접속을 허용하기 위해 `--host 0.0.0.0` 옵션을 추가하여 실행합니다.
+외부 접속을 허용하기 위해 `--host 0.0.0.0`과 `--port 5174` 옵션을 추가하여 실행합니다.
 
 ```bash
-uvicorn main:app --reload --host 0.0.0.0
+uvicorn main:app --reload --host 0.0.0.0 --port 5174
 ```
 
 ### 2. Frontend 환경 설정 (.env.local)
@@ -128,15 +128,24 @@ uvicorn main:app --reload --host 0.0.0.0
 `.env.local` 파일의 API 주소를 `localhost` 대신 PC의 내부 IP 주소로 변경해야 합니다.
 
 ```properties
-VITE_API_BASE_URL=http://192.168.0.x:8000
+VITE_API_BASE_URL=http://192.168.0.x:5174
 ```
 
 ### 3. Kakao Map 도메인 등록
 
-카카오 지도는 등록된 도메인에서만 작동합니다. [카카오 개발자 센터](https://developers.kakao.com/)에서 모바일 접속 주소를 등록해주세요.
+[카카오 개발자 센터](https://developers.kakao.com/) > 플랫폼 > Web > 사이트 도메인에 아래 주소들을 등록해야 지도가 정상 작동합니다.
 
-- 경로: 내 애플리케이션 > 플랫폼 > Web > 사이트 도메인
-- 추가할 주소: `http://192.168.0.x:5173` (본인의 PC IP)
+- `http://192.168.0.x:5173` (Frontend)
+- `http://192.168.0.x:5174` (Backend)
+
+---
+
+## ✅ 최근 업데이트 내역 (Recent Updates)
+
+- **카카오 맵 최적화**: 429 에러(Too Many Requests) 해결을 위한 주소 변환 API 호출 제한(디바운싱) 및 지도 인스턴스 재사용 로직 적용.
+- **네트워크 안정성**: 모바일 환경을 고려하여 API 타임아웃 시간을 15초로 연장 및 데이터 로드 실패 시 기존 UI 유지 로직 추가.
+- **UX 개선**: 페이지 전환 시 화면 상단으로 자동 스크롤되는 기능 추가.
+- **서버 설정**: 기본 포트를 8000에서 5174로 변경하여 포트 충돌 및 연결 이슈 우회.
 
 ---
 

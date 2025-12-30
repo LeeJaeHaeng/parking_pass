@@ -118,7 +118,7 @@ async function safeFetch(url: string, options?: RequestInit) {
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃 (모바일 및 날씨 API 지연 고려)
 
   try {
     const response = await fetch(url, { ...options, headers, signal: controller.signal });
