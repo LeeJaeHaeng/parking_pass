@@ -21,7 +21,8 @@ export const generatePredictionData = (parkingId: number): PredictionData[] => {
     if (hour >= 12 && hour <= 14) occupancy += 15;
     if (hour >= 0 && hour <= 6) occupancy -= 30;
 
-    occupancy += Math.random() * 10 - 5; // 랜덤 변동
+    // 결정적 패턴(랜덤 제거): 시간+주차장 ID 기반 사인파 변동
+    occupancy += Math.sin((hour + parkingId) * 1.7) * 3;
     occupancy = Math.max(10, Math.min(95, occupancy));
 
     const confidence = Math.max(60, 90 - i * 2); // 시간이 지날수록 신뢰도 감소
