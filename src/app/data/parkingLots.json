@@ -1,1682 +1,1682 @@
 [
   {
-    "id": "301-2-000014",
-    "name": "중앙시장앞주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 영성동 20-2",
-    "totalSpaces": 60,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
-      "basic": 500,
-      "additional": 200
+      "basic": 0,
+      "additional": 0
     },
-    "feeInfo": "유료",
-    "latitude": 36.80396842,
-    "longitude": 127.1508934
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000016",
-    "name": "남산중앙시장주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 사직2길 19",
-    "totalSpaces": 57,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
-      "basic": 500,
-      "additional": 200
+      "basic": 0,
+      "additional": 0
     },
-    "feeInfo": "유료",
-    "latitude": 36.80031284,
-    "longitude": 127.1484548
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000022",
-    "name": "청수상업지구내 주차빌딩주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 청수11로 12",
-    "totalSpaces": 364,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.78249305,
-    "longitude": 127.1536331
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000028",
-    "name": "남산중앙시장제2주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 큰재빼기길 29",
-    "totalSpaces": 67,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
-      "basic": 500,
-      "additional": 200
+      "basic": 0,
+      "additional": 0
     },
-    "feeInfo": "유료",
-    "latitude": 36.80431803,
-    "longitude": 127.1495845
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000031",
-    "name": "봉명동주민센터 주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 봉정로 37",
-    "totalSpaces": 12,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8055391,
-    "longitude": 127.1394121
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000032",
-    "name": "농업기술센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 목천읍 목천안터1길 15",
-    "totalSpaces": 84,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.77550806,
-    "longitude": 127.2078978
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000033",
-    "name": "북면사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 북면 위례성로 724",
-    "totalSpaces": 15,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.82747276,
-    "longitude": 127.2732435
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000034",
-    "name": "동남구청주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 버들로 40",
-    "totalSpaces": 58,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80719083,
-    "longitude": 127.1514651
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000035",
-    "name": "수신면사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 수신면 수신로 431",
-    "totalSpaces": 24,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.7311552,
-    "longitude": 127.2809647
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000036",
-    "name": "신안동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 먹거리11길 45",
-    "totalSpaces": 11,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81840257,
-    "longitude": 127.1576052
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000037",
-    "name": "일봉동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 신용로 48",
-    "totalSpaces": 8,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80122533,
-    "longitude": 127.1420521
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000038",
-    "name": "중앙동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 원성천1길 17(영성동)",
-    "totalSpaces": 5,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80006272,
-    "longitude": 127.1524177
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000039",
-    "name": "신방동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 천안천변길 129-41(신방동)",
-    "totalSpaces": 29,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.78587053,
-    "longitude": 127.1224907
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000040",
-    "name": "청룡동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 청수14로 99",
-    "totalSpaces": 19,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.78607183,
-    "longitude": 127.1567413
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000041",
-    "name": "병천면사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 병천면 병천2로 57",
-    "totalSpaces": 32,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.76719291,
-    "longitude": 127.3025835
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000042",
-    "name": "성남면사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 성남면 신사대화로 149",
-    "totalSpaces": 12,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.74222767,
-    "longitude": 127.2369289
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000043",
-    "name": "문성동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 문화로 15",
-    "totalSpaces": 115,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
-      "basic": 500,
-      "additional": 200
+      "basic": 0,
+      "additional": 0
     },
-    "feeInfo": "유료",
-    "latitude": 36.8109412,
-    "longitude": 127.1502833
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000044",
-    "name": "원성1동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 성황로 125",
-    "totalSpaces": 13,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81187124,
-    "longitude": 127.163016
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000045",
-    "name": "목천읍사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 목천읍 서리1길 41-7",
-    "totalSpaces": 30,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.78517959,
-    "longitude": 127.2346095
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000046",
-    "name": "동면사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 동면 동산1길 15",
-    "totalSpaces": 23,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.7761603,
-    "longitude": 127.3443628
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000047",
-    "name": "광덕면사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 광덕면 신흥리3길 33",
-    "totalSpaces": 27,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.69853981,
-    "longitude": 127.1116009
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000048",
-    "name": "유관순사우주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 병천면 유관순길 38",
-    "totalSpaces": 67,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.76009007,
-    "longitude": 127.3083682
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000049",
-    "name": "유관순생가주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 병천면 유관순생가길 18-1",
-    "totalSpaces": 36,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.7571481,
-    "longitude": 127.3167796
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000050",
-    "name": "이동녕선생기념관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 목천읍 동리4길 35",
-    "totalSpaces": 34,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.79072254,
-    "longitude": 127.2385675
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000051",
-    "name": "조병옥박사생가주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 병천면 유관순길 249",
-    "totalSpaces": 6,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.75170776,
-    "longitude": 127.3146145
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000052",
-    "name": "중앙도서관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 중앙로 118",
-    "totalSpaces": 24,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 08:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8091134,
-    "longitude": 127.1535923
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000053",
-    "name": "아우내도서관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 병천면 병천2로 57",
-    "totalSpaces": 41,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 08:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.76719291,
-    "longitude": 127.3025835
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-3-000054",
-    "name": "신방도서관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 통정4로 7",
-    "totalSpaces": 29,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 08:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.77441534,
-    "longitude": 127.1307313
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000068",
-    "name": "5단지시장주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 양지21길 31",
-    "totalSpaces": 29,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
-      "basic": 500,
-      "additional": 200
+      "basic": 0,
+      "additional": 0
     },
-    "feeInfo": "유료",
-    "latitude": 36.8126333,
-    "longitude": 127.1392105
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000075",
-    "name": "천안시청주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 번영로 156",
-    "totalSpaces": 348,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81612841,
-    "longitude": 127.1130483
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000076",
-    "name": "서북구청 주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성거읍 봉주로 75",
-    "totalSpaces": 249,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.87871381,
-    "longitude": 127.1559972
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000077",
-    "name": "성환읍사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성환읍 성환13길 7",
-    "totalSpaces": 56,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.9181614,
-    "longitude": 127.1343912
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000078",
-    "name": "직산읍사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 직산읍 삼은4길 2",
-    "totalSpaces": 62,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8790065,
-    "longitude": 127.1504675
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000079",
-    "name": "입장면사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 입장면 입장로 129",
-    "totalSpaces": 32,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.91295639,
-    "longitude": 127.2212251
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000080",
-    "name": "성정2동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 서부1길 57",
-    "totalSpaces": 16,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.82385581,
-    "longitude": 127.1374898
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000081",
-    "name": "쌍용1동 주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 미라10길 21",
-    "totalSpaces": 9,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8040163,
-    "longitude": 127.1305234
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000082",
-    "name": "쌍용2동 주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용14길 70",
-    "totalSpaces": 21,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.7962244,
-    "longitude": 127.1235022
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000083",
-    "name": "쌍용3동주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 월봉로 138",
-    "totalSpaces": 24,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8029362,
-    "longitude": 127.1191837
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000084",
-    "name": "부성1동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 부대중앙길 51",
-    "totalSpaces": 13,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8426114928,
-    "longitude": 127.1522288
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000085",
-    "name": "부성2동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 부성7길 39-5",
-    "totalSpaces": 6,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.83733587,
-    "longitude": 127.1379223
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000086",
-    "name": "성거읍사무소주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성거읍 봉주로 469",
-    "totalSpaces": 49,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.87798796,
-    "longitude": 127.1991297
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000087",
-    "name": "성정1동주민센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성정8길 5",
-    "totalSpaces": 56,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8179437,
-    "longitude": 127.141326
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000088",
-    "name": "성정1동주민자치센터주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성정7길 34",
-    "totalSpaces": 10,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 09:00-18:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8175221,
-    "longitude": 127.1403271
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000089",
-    "name": "성정1동공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 선영7길 18-6",
-    "totalSpaces": 52,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81569429,
-    "longitude": 127.1444851
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000090",
-    "name": "쌍용도서관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 월봉4로 153",
-    "totalSpaces": 50,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 08:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80040792,
-    "longitude": 127.1146208
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000091",
-    "name": "성거도서관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성거읍 천흥3길 3",
-    "totalSpaces": 17,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 08:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.87162843,
-    "longitude": 127.2010113
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000092",
-    "name": "두정도서관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 부성3길 9",
-    "totalSpaces": 46,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 08:00-22:00",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.83459674,
-    "longitude": 127.1346155
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000092",
-    "name": "시민문화여성회관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성정중4길 29",
-    "totalSpaces": 44,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8273354,
-    "longitude": 127.1362858
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000093",
-    "name": "두정문화회관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 봉정로 347",
-    "totalSpaces": 52,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.83296339,
-    "longitude": 127.1451493
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000094",
-    "name": "신부문화회관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 신부2길 12",
-    "totalSpaces": 20,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8176597,
-    "longitude": 127.1594536
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-3-000095",
-    "name": "성환문화회관주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성환읍 성진로 15",
-    "totalSpaces": 170,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.91253596,
-    "longitude": 127.1366796
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000001",
-    "name": "차돌로 제1노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 다가동 471",
-    "totalSpaces": 64,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.801800631,
-    "longitude": 127.1382366236
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000002",
-    "name": "신용로 제1노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 신용로 20",
-    "totalSpaces": 95,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80114649,
-    "longitude": 127.1387965
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000004",
-    "name": "버들로 제1노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 원성동 602",
-    "totalSpaces": 45,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80918163,
-    "longitude": 127.1581915
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000005",
-    "name": "성황로 제3노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 원성25길 21",
-    "totalSpaces": 22,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81418927,
-    "longitude": 127.162674
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000007",
-    "name": "대흥로 제2노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 사직동 321-4",
-    "totalSpaces": 28,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80294273,
-    "longitude": 127.146164
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000009",
-    "name": "성황로 제2노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 원성동 610",
-    "totalSpaces": 50,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8119878656,
-    "longitude": 127.1614814289
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000010",
-    "name": "중앙로 제1노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 영성동 129",
-    "totalSpaces": 18,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8022472758,
-    "longitude": 127.1528277
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-1-000011",
-    "name": "대흥로 제1노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 대흥동 156-3",
-    "totalSpaces": 56,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.80717031,
-    "longitude": 127.1475025
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000012",
-    "name": "신부 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 터미널8길 7",
-    "totalSpaces": 38,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 100
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.8222344,
-    "longitude": 127.1579813
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000015",
-    "name": "광덕 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 광덕면 해수길 50",
-    "totalSpaces": 151,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.67234277,
-    "longitude": 127.0455523
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000017",
-    "name": "병천 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 병천면 아우내순대길 22",
-    "totalSpaces": 114,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.75965335,
-    "longitude": 127.2981998
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000018",
-    "name": "목천 캠핑카전용주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 목천읍 운전리 503",
-    "totalSpaces": 201,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 100
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.76214263,
-    "longitude": 127.2273522
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000020",
-    "name": "광덕 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 광덕면 광풍로 264",
-    "totalSpaces": 424,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.67465099,
-    "longitude": 127.0536174
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000021",
-    "name": "안서 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 안서동 526-39",
-    "totalSpaces": 121,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.837569,
-    "longitude": 127.173361
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000023",
-    "name": "신부 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 신부동 77-26",
-    "totalSpaces": 12,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8139870352,
-    "longitude": 127.160149
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000024",
-    "name": "신부 제3공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 신부동 331-43",
-    "totalSpaces": 13,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.820381,
-    "longitude": 127.153829
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000025",
-    "name": "구성 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 대흥로 29",
-    "totalSpaces": 18,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.79647634,
-    "longitude": 127.1573648
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000026",
-    "name": "북면 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 북면 박문수길 108",
-    "totalSpaces": 23,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.77775914,
-    "longitude": 127.2685935
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000027",
-    "name": "북면 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 북면 박문수길 135-12",
-    "totalSpaces": 13,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.77890447,
-    "longitude": 127.2716407
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000029",
-    "name": "청당 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 청당동 567",
-    "totalSpaces": 17,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.785089,
-    "longitude": 127.1574072
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000030",
-    "name": "신방 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 신방동 1901",
-    "totalSpaces": 49,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.773007,
-    "longitude": 127.132113
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000074",
-    "name": "신부 제4공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 먹거리 9길 16",
-    "totalSpaces": 13,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 100
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.81752115,
-    "longitude": 127.1556505
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000097",
-    "name": "대흥 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 대흥로 205",
-    "totalSpaces": 20,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.80651394,
-    "longitude": 127.1468451
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000098",
-    "name": "명동 공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 명동길 36",
-    "totalSpaces": 77,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.80637728,
-    "longitude": 127.1487237
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000099",
-    "name": "목천 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 목천면 서흥리 124-1",
-    "totalSpaces": 25,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.806065,
-    "longitude": 127.238488
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000099",
-    "name": "봉명 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 봉명동 10-2",
-    "totalSpaces": 62,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.803699,
-    "longitude": 127.141079
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000100",
-    "name": "봉명 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 봉명동 20-27",
-    "totalSpaces": 21,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.802751,
-    "longitude": 127.138902
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000101",
-    "name": "사직 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 사직동 287-5",
-    "totalSpaces": 57,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.79830415,
-    "longitude": 127.148763
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-1-000056",
-    "name": "쌍용대로 제1노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성정동 748",
-    "totalSpaces": 43,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81787109,
-    "longitude": 127.1356868
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-1-000057",
-    "name": "성정로 제1노상주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성정로 75",
-    "totalSpaces": 27,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81441951,
-    "longitude": 127.139401
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000058",
-    "name": "쌍용 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 미라3길 16",
-    "totalSpaces": 111,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.8010241,
-    "longitude": 127.1308965
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000060",
-    "name": "쌍용 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용동 655",
-    "totalSpaces": 70,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.7979636962,
-    "longitude": 127.1225367728
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000061",
-    "name": "쌍용 제3공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용동 1299",
-    "totalSpaces": 13,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8003095,
-    "longitude": 127.1256807
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000062",
-    "name": "성정 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 서부대로 648-23",
-    "totalSpaces": 69,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.82466276,
-    "longitude": 127.1352845
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000063",
-    "name": "불당 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 검은들1길 15",
-    "totalSpaces": 144,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.81122082,
-    "longitude": 127.1095158
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000064",
-    "name": "불당 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 검은들3길 3",
-    "totalSpaces": 49,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.81054256,
-    "longitude": 127.1110928
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000065",
-    "name": "불당 제3공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 불당동 910",
-    "totalSpaces": 57,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.80528955,
-    "longitude": 127.1080386
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000066",
-    "name": "불당 제4공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 불당동 970",
-    "totalSpaces": 28,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.8037354,
-    "longitude": 127.108518
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000067",
-    "name": "두정역 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 두정로 310",
-    "totalSpaces": 42,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 100
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.83176092,
-    "longitude": 127.1510379
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000069",
-    "name": "성성 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성성동 511-9",
-    "totalSpaces": 62,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.83859055,
-    "longitude": 127.1166418
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000070",
-    "name": "쌍용 제5공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용동 2114",
-    "totalSpaces": 19,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.807032,
-    "longitude": 127.117955
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000071",
-    "name": "성환 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성환읍 성환리 357-10",
-    "totalSpaces": 24,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.91647011,
-    "longitude": 127.131189
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000072",
-    "name": "두정 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 두정상가7길 12",
-    "totalSpaces": 18,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.8311333,
-    "longitude": 127.1391441
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000073",
-    "name": "성거 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성거읍 천흥리 430-5",
-    "totalSpaces": 47,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.872552,
-    "longitude": 127.201385
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000096",
-    "name": "불당 제5공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 불당25로 154",
-    "totalSpaces": 130,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 500
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.81491719,
-    "longitude": 127.1079523
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000102",
-    "name": "성거 제2공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성거읍 성거길 95-1",
-    "totalSpaces": 25,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.87410144,
-    "longitude": 127.2013641
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000103",
-    "name": "성정 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성정동 175-1",
-    "totalSpaces": 12,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.812871,
-    "longitude": 127.145689
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000104",
-    "name": "성정 제3공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 성정동 602-35",
-    "totalSpaces": 27,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.81473768,
-    "longitude": 127.142416
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000105",
-    "name": "쌍용 제4공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용동 2074",
-    "totalSpaces": 44,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.7875699,
-    "longitude": 127.1141843
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000106",
-    "name": "쌍용 제6공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용동 1566",
-    "totalSpaces": 52,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.79230641,
-    "longitude": 127.118594
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000107",
-    "name": "쌍용 제7공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용동 1564",
-    "totalSpaces": 19,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.79261341,
-    "longitude": 127.117988
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000108",
-    "name": "쌍용역 제1공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 쌍용동 409-2, 410-2",
-    "totalSpaces": 54,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
       "additional": 0
     },
-    "feeInfo": "무료",
-    "latitude": 36.794407,
-    "longitude": 127.122591
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "302-2-000111",
-    "name": "노태공원공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 서북구 노태산로131",
-    "totalSpaces": 98,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.838151262,
-    "longitude": 127.1281753557
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   },
   {
-    "id": "301-2-000102",
-    "name": "신부제5공영주차장",
+    "id": null,
+    "name": null,
     "type": "private",
-    "address": "충청남도 천안시 동남구 먹거리1길 10",
-    "totalSpaces": 232,
+    "address": null,
+    "totalSpaces": 0,
     "availableSpaces": null,
-    "operatingHours": "평일+토요일+공휴일 00:00-23:59",
+    "operatingHours": "?? ??",
     "fee": {
       "basic": 0,
-      "additional": 200
+      "additional": 0
     },
-    "feeInfo": "혼합",
-    "latitude": 36.8178099825,
-    "longitude": 127.1535096
+    "feeInfo": "",
+    "latitude": null,
+    "longitude": null
   }
 ]
