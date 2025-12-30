@@ -197,46 +197,75 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
               <TabsTrigger value="occupancy">점유율</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="hourly" className="mt-4">
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={predictionData.slice(0, 12)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
-                  <Tooltip 
-                    contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                    formatter={(value: any) => [`${value}%`, '점유율']}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="occupancyRate" 
-                    stroke="#3b82f6" 
-                    strokeWidth={2}
-                    dot={{ fill: '#3b82f6', r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <TabsContent value="hourly" className="mt-4 min-h-[200px]">
+              {loadingPred ? (
+                <div className="flex h-[200px] items-center justify-center text-sm text-gray-500 animate-pulse">
+                  AI 예측 데이터를 분석 중입니다...
+                </div>
+              ) : predictionData.length > 0 ? (
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={predictionData.slice(0, 12)}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                      <Tooltip 
+                        contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                        formatter={(value: any) => [`${value}%`, '점유율']}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="occupancyRate" 
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        dot={{ fill: '#3b82f6', r: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex h-[200px] items-center justify-center text-sm text-gray-400 bg-gray-50 rounded border border-dashed border-gray-200">
+                  <div className="text-center">
+                    <p>예측 데이터를 불러오지 못했습니다.</p>
+                    <p className="text-xs mt-1">(백엔드 연결 상태를 확인해주세요)</p>
+                  </div>
+                </div>
+              )}
             </TabsContent>
             
-            <TabsContent value="occupancy" className="mt-4">
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={predictionData.slice(0, 12)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
-                  <Tooltip 
-                    contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                    formatter={(value: any) => [`${value}%`, '점유율']}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="occupancyRate" 
-                    stroke="#8b5cf6" 
-                    fill="#8b5cf6" 
-                    fillOpacity={0.3}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <TabsContent value="occupancy" className="mt-4 min-h-[200px]">
+              {loadingPred ? (
+                <div className="flex h-[200px] items-center justify-center text-sm text-gray-500 animate-pulse">
+                  AI 예측 데이터를 분석 중입니다...
+                </div>
+              ) : predictionData.length > 0 ? (
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={predictionData.slice(0, 12)}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                      <Tooltip 
+                        contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                        formatter={(value: any) => [`${value}%`, '점유율']}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="occupancyRate" 
+                        stroke="#8b5cf6" 
+                        fill="#8b5cf6" 
+                        fillOpacity={0.3}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex h-[200px] items-center justify-center text-sm text-gray-400 bg-gray-50 rounded border border-dashed border-gray-200">
+                  <div className="text-center">
+                    <p>예측 데이터를 불러오지 못했습니다.</p>
+                  </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </Card>
