@@ -29,10 +29,14 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
       try {
         const data = await api.getParkingLots();
         // distance가 없는 경우 0 처리
-        const normalized = data.map((lot) => ({
+        let normalized = data.map((lot) => ({
           ...lot,
           distance: lot.distance ?? 0,
         }));
+        // 백엔드가 모의 단일 데이터만 줄 때는 CSV 기반 모의 데이터로 대체
+        if (!normalized || normalized.length <= 5) {
+          normalized = mockParkingLots;
+        }
         setParkingLots(normalized);
       } catch (error) {
         console.error('Failed to fetch parking lots:', error);
@@ -164,6 +168,8 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
                 navigator.geolocation.getCurrentPosition(
                   (pos) => {
                     setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                    setSelectedFilter('nearby');
+                    setSortBy('distance');
                   },
                   (err) => {
                     setLocError(err.message || '위치 정보를 가져올 수 없습니다.');
