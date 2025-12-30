@@ -22,6 +22,7 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
   const [userLocation, setUserLocation] = useState<UserLocation>(null);
   const [locError, setLocError] = useState<string | null>(null);
   const [weather, setWeather] = useState<{ temperature: number; condition: string; precipitationProbability: number } | null>(null);
+  const [sortBy, setSortBy] = useState<'distance' | 'availability' | 'congestion'>('distance');
 
   useEffect(() => {
     const fetchParkingLots = async () => {
@@ -89,7 +90,17 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
       }));
     }
 
-    return filtered.sort((a, b) => a.distance - b.distance);
+    // 정렬
+    return filtered.sort((a, b) => {
+      if (sortBy === 'distance') return a.distance - b.distance;
+      if (sortBy === 'availability') return b.availableSpaces - a.availableSpaces;
+      if (sortBy === 'congestion') {
+        const rateA = a.availableSpaces / a.totalSpaces;
+        const rateB = b.availableSpaces / b.totalSpaces;
+        return rateB - rateA; // 가용률 높은 순
+      }
+      return 0;
+    });
   };
 
   const getOccupancyColor = (available: number, total: number) => {
@@ -217,6 +228,29 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             onClick={() => setSelectedFilter('nearby')}
           >
             가까운 순
+          </Button>
+        </div>
+        <div className="max-w-lg mx-auto flex gap-2 mt-2">
+          <Button
+            variant={sortBy === 'distance' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortBy('distance')}
+          >
+            거리순
+          </Button>
+          <Button
+            variant={sortBy === 'availability' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortBy('availability')}
+          >
+            잔여순
+          </Button>
+          <Button
+            variant={sortBy === 'congestion' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortBy('congestion')}
+          >
+            가용률순
           </Button>
         </div>
       </div>
