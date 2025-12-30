@@ -111,6 +111,9 @@ export default function HistoryPage({ onBack }: HistoryPageProps) {
 
         {/* History List */}
         <div className="space-y-3">
+          {loading && (
+            <Card className="p-4 text-sm text-gray-500">내역을 불러오는 중...</Card>
+          )}
           {history.map((item) => (
             <Card key={item.id} className="p-4 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-3">
