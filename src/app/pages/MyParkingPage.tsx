@@ -15,6 +15,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '../components/ui/sheet';
+import { KakaoMap } from '../components/KakaoMap';
 
 interface MyParkingPageProps {
   onPayment: () => void;
@@ -146,10 +154,31 @@ export default function MyParkingPage({ onPayment }: MyParkingPageProps) {
             </div>
           </div>
 
-          <Button variant="outline" className="w-full">
-            <Navigation2 className="w-4 h-4 mr-2" />
-            주차 위치 확인
-          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="w-full">
+                <Navigation2 className="w-4 h-4 mr-2" />
+                주차 위치 확인
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-xl h-auto flex flex-col">
+              <SheetHeader className="mb-4">
+                <SheetTitle>내 차량 위치 확인</SheetTitle>
+                <p className="text-sm text-gray-500">{currentParking.name}</p>
+              </SheetHeader>
+              <div className="w-full rounded-lg overflow-hidden border border-gray-200 relative mb-6">
+                 <KakaoMap 
+                    parkingLots={[currentParking]} 
+                    targetLocation={{
+                        lat: currentParking.latitude!,
+                        lon: currentParking.longitude!,
+                        name: '내 차량'
+                    }}
+                    height="20rem"
+                 />
+              </div>
+            </SheetContent>
+          </Sheet>
         </Card>
 
         {/* Parking Details */}
@@ -233,9 +262,7 @@ export default function MyParkingPage({ onPayment }: MyParkingPageProps) {
             </AlertDialogContent>
           </AlertDialog>
 
-          <Button variant="outline" className="w-full">
-            주차 연장 알림 설정
-          </Button>
+
         </div>
       </div>
     </div>

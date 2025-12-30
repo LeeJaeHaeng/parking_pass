@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Calendar, Clock, DollarSign, Download, Filter } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, DollarSign, Download, Filter, MapPin } from 'lucide-react';
 import { mockParkingHistory } from '../data/mockData';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -22,7 +22,19 @@ export default function HistoryPage({ onBack }: HistoryPageProps) {
         const stored = typeof window !== 'undefined' ? window.localStorage.getItem('authUser') : null;
         const userId = stored ? Number(JSON.parse(stored).id) : undefined;
         const data = await api.getHistory(userId);
-        setHistory(data);
+        
+        // 타입 매핑
+        const mappedData: ParkingHistory[] = data.map((item: any) => ({
+          id: item.id ? Number(item.id) : Math.floor(Math.random() * 10000),
+          parkingLotName: item.parkingLotName,
+          date: item.createdAt || new Date().toISOString(), 
+          startTime: item.startTime || '00:00',
+          endTime: item.endTime || '00:00',
+          duration: item.duration || 0,
+          fee: item.fee
+        }));
+        
+        setHistory(mappedData);
       } catch (e) {
         setHistory(mockParkingHistory);
       } finally {
@@ -115,39 +127,46 @@ export default function HistoryPage({ onBack }: HistoryPageProps) {
             <Card className="p-4 text-sm text-gray-500">내역을 불러오는 중...</Card>
           )}
           {history.map((item) => (
-            <Card key={item.id} className="p-4 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="text-xs">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {formatDate(item.date)}
-                    </Badge>
-                  </div>
-                  <h3 className="mb-1">{item.parkingLotName}</h3>
+            <Card key={item.id} className="p-5 hover:shadow-lg transition-all shadow-sm border border-gray-100">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex gap-4">
+                   <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-6 h-6 text-blue-600" />
+                   </div>
+                   <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium text-gray-500">{formatDate(item.date)}</span>
+                        {item.duration > 0 && <span className="w-1 h-1 rounded-full bg-gray-300"></span>}
+                        {item.duration > 0 && <span className="text-sm text-gray-500">{Math.floor(item.duration / 60)}시간 {item.duration % 60}분</span>}
+                      </div>
+                      <h3 className="font-bold text-lg text-gray-900 leading-tight">{item.parkingLotName}</h3>
+                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg text-blue-600">{item.fee.toLocaleString()}원</p>
+                   <p className="text-lg font-bold text-gray-900">{item.fee.toLocaleString()}원</p>
+                   <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs font-medium border-0 mt-1">
+                     결제완료
+                   </Badge>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Clock className="w-4 h-4" />
-                  <span>{item.startTime} ~ {item.endTime}</span>
+              <div className="bg-gray-50 rounded-lg p-3 grid grid-cols-2 gap-4 text-sm mb-4">
+                <div className="flex flex-col">
+                   <span className="text-gray-500 text-xs mb-1">입차 시간</span>
+                   <span className="font-medium">{item.startTime}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <DollarSign className="w-4 h-4" />
-                  <span>{Math.floor(item.duration / 60)}시간 {item.duration % 60}분</span>
+                <div className="flex flex-col">
+                   <span className="text-gray-500 text-xs mb-1">출차 시간</span>
+                   <span className="font-medium">{item.endTime}</span>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-3 border-t border-gray-100">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Download className="w-3 h-3 mr-1" />
-                  영수증
+              <div className="flex gap-3">
+                <Button variant="outline" size="sm" className="flex-1 h-10 border-gray-200">
+                  <Download className="w-4 h-4 mr-2 text-gray-500" />
+                  영수증 저장
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white">
                   다시 이용
                 </Button>
               </div>

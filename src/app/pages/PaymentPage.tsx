@@ -8,6 +8,12 @@ import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Label } from '../components/ui/label';
 import { Separator } from '../components/ui/separator';
 
+declare global {
+  interface Window {
+    IMP: any;
+  }
+}
+
 interface PaymentPageProps {
   onComplete: () => void;
 }
@@ -43,25 +49,61 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
   const handlePayment = () => {
     setIsProcessing(true);
     setError(null);
-    
-    // Simulate payment processing + API 기록
-    setTimeout(async () => {
-      try {
-        await api.createPayment({
-          parkingLotName: parking.name,
-          startTime: parkingStartTime,
-          endTime: parkingEndTime,
-          duration: durationMinutes,
-          fee: totalFee,
-          userId: getStoredUserId(),
-        });
-        setIsComplete(true);
-      } catch (e: any) {
-        setError(e?.message || '결제 기록 저장에 실패했습니다');
-      } finally {
-        setIsProcessing(false);
+
+    // 포트원(Iamport) 결제 요청
+    if (!window.IMP) {
+      setError('결제 SDK 로드 실패');
+      setIsProcessing(false);
+      return;
+    }
+
+    const { IMP } = window;
+    IMP.init('imp19424728'); // 포트원 공개 테스트 ID
+
+    // 결제 수단 매핑
+    let pg = 'html5_inicis'; // 기본: 이니시스(웹표준)
+    let pay_method = 'card';
+
+    if (paymentMethod === 'mobile') {
+      pg = 'kakaopay';
+    } else if (paymentMethod === 'account') {
+      pay_method = 'trans';
+    }
+
+    const data = {
+      pg: pg,
+      pay_method: pay_method,
+      merchant_uid: `mid_${new Date().getTime()}`,
+      name: `${parking.name} 주차요금`,
+      amount: totalFee,
+      buyer_email: 'test@cheonan.go.kr',
+      buyer_name: '홍길동',
+      buyer_tel: '010-1234-5678',
+      m_redirect_url: window.location.href, // 모바일에서 리다이렉트될 URL
+    };
+
+    IMP.request_pay(data, async (rsp: any) => {
+      if (rsp.success) {
+        // 결제 성공 시 서버에 기록
+        try {
+          await api.createPayment({
+            parkingLotName: parking.name,
+            startTime: parkingStartTime,
+            endTime: parkingEndTime,
+            duration: durationMinutes,
+            fee: totalFee,
+            userId: getStoredUserId(),
+          });
+          setIsComplete(true);
+        } catch (e: any) {
+          setError(e?.message || '결제 기록 저장에 실패했습니다');
+        }
+      } else {
+        // 결제 실패/취소
+        setError(`결제가 취소되었거나 실패했습니다: ${rsp.error_msg}`);
       }
-    }, 1000);
+      setIsProcessing(false);
+    });
   };
 
   if (isComplete) {
@@ -231,31 +273,11 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
           </RadioGroup>
         </Card>
 
-        {/* Payment Card Details (when card is selected) */}
+        {/* 안내 메시지 - 카드 선택 시 */}
         {paymentMethod === 'card' && (
-          <Card className="p-4 bg-blue-50 border-blue-200">
-            <div className="space-y-3">
-              <div>
-                <Label className="mb-2 block text-sm">카드 번호</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  <input type="text" maxLength={4} placeholder="1234" className="px-3 py-2 rounded border text-center" />
-                  <input type="text" maxLength={4} placeholder="5678" className="px-3 py-2 rounded border text-center" />
-                  <input type="text" maxLength={4} placeholder="9012" className="px-3 py-2 rounded border text-center" />
-                  <input type="text" maxLength={4} placeholder="3456" className="px-3 py-2 rounded border text-center" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="mb-2 block text-sm">유효기간</Label>
-                  <input type="text" placeholder="MM/YY" className="w-full px-3 py-2 rounded border text-center" />
-                </div>
-                <div>
-                  <Label className="mb-2 block text-sm">CVC</Label>
-                  <input type="text" maxLength={3} placeholder="123" className="w-full px-3 py-2 rounded border text-center" />
-                </div>
-              </div>
-            </div>
-          </Card>
+           <div className="text-sm text-gray-500 bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4">
+              결제하기 버튼을 누르면 카드사 결제창이 호출됩니다. (테스트 결제)
+           </div>
         )}
 
         {/* Terms */}

@@ -6,39 +6,8 @@ const toRadians = (deg: number) => (deg * Math.PI) / 180;
 const EARTH_RADIUS_KM = 6371;
 const center = { lat: 36.815, lon: 127.113 }; // 천안시청 근처 기준점
 
-export const generatePredictionData = (parkingId: number): PredictionData[] => {
-  const baseOccupancy = 60 + parkingId * 5;
-  const now = new Date();
-  const data: PredictionData[] = [];
-
-  for (let i = 0; i < 24; i++) {
-    const hour = (now.getHours() + i) % 24;
-    let occupancy = baseOccupancy;
-
-    // 출퇴근/점심 시간대 반영
-    if (hour >= 8 && hour <= 10) occupancy += 20;
-    if (hour >= 17 && hour <= 19) occupancy += 25;
-    if (hour >= 12 && hour <= 14) occupancy += 15;
-    if (hour >= 0 && hour <= 6) occupancy -= 30;
-
-    // 결정적 패턴(랜덤 제거): 시간+주차장 ID 기반 사인파 변동
-    occupancy += Math.sin((hour + parkingId) * 1.7) * 3;
-    occupancy = Math.max(10, Math.min(95, occupancy));
-
-    const confidence = Math.max(60, 90 - i * 2); // 시간이 지날수록 신뢰도 감소
-
-    data.push({
-      time: `${hour}:00`,
-      occupancyRate: Math.round(occupancy),
-      confidence,
-    });
-  }
-
-  return data;
-};
-
 const calcDistanceKm = (lat: number, lon: number) => {
-  if (lat === undefined || lon === undefined) return 0;
+  if (!lat || !lon) return 0;
   const dLat = toRadians(lat - center.lat);
   const dLon = toRadians(lon - center.lon);
   const a =
@@ -47,112 +16,88 @@ const calcDistanceKm = (lat: number, lon: number) => {
       Math.cos(toRadians(lat)) *
       Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(EARTH_RADIUS_KM * c * 10) / 10; // 0.1km 단위 반올림
+  return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
 };
 
-const csvParkingLots: ParkingLot[] = (parkingLotsSource as any[])
-  .filter((p) => p.latitude && p.longitude)
-  .map((p, idx) => {
-    const total = Number(p.totalSpaces) || 0;
-    const available = p.availableSpaces ?? Math.max(1, Math.round(total * 0.35));
+/**
+ * 시간대별 예측 데이터 생성 (클라이언트 폴백용)
+ * 실제 예측은 백엔드 API에서 불법주정차 패턴 기반으로 수행
+ */
+export const generatePredictionData = (parkingId: string): PredictionData[] => {
+  const now = new Date();
+  const data: PredictionData[] = [];
+
+  for (let i = 0; i < 24; i++) {
+    const hour = (now.getHours() + i) % 24;
+    let baseOccupancy = 50;
+
+    // 시간대별 기본 패턴 (불법주정차 데이터 기반 가중치 적용)
+    const hourlyWeights: Record<number, number> = {
+      0: 0.15, 1: 0.12, 2: 0.10, 3: 0.07, 4: 0.09, 5: 0.11,
+      6: 0.18, 7: 0.59, 8: 0.68, 9: 0.73, 10: 0.92, 11: 0.75,
+      12: 0.84, 13: 0.72, 14: 0.81, 15: 0.85, 16: 0.86, 17: 0.87,
+      18: 0.93, 19: 1.00, 20: 0.95, 21: 0.42, 22: 0.33, 23: 0.26
+    };
+    
+    const weight = hourlyWeights[hour] || 0.5;
+    baseOccupancy = 40 + weight * 55;
+    baseOccupancy = Math.max(10, Math.min(95, baseOccupancy));
+
+    // 신뢰도: 가까운 시간일수록 높음
+    const confidence = Math.max(60, 90 - i * 1.5);
+
+    data.push({
+      time: `${hour}:00`,
+      occupancyRate: Math.round(baseOccupancy),
+      confidence: Math.round(confidence),
+    });
+  }
+
+  return data;
+};
+
+/**
+ * CSV에서 파싱된 실제 주차장 데이터
+ */
+export const mockParkingLots: ParkingLot[] = (parkingLotsSource as any[])
+  .filter((p) => p.latitude && p.longitude && p.name)
+  .map((p) => {
+    const lat = Number(p.latitude);
+    const lon = Number(p.longitude);
     return {
-      id: idx + 1,
-      externalId: p.id,
+      id: p.id?.toString() || '',
       name: p.name,
-      address: p.address,
-      totalSpaces: total,
-      availableSpaces: available,
-      distance: calcDistanceKm(Number(p.latitude), Number(p.longitude)),
+      address: p.address || '',
+      totalSpaces: Number(p.totalSpaces) || 0,
+      availableSpaces: p.availableSpaces ?? Math.max(1, Math.round((Number(p.totalSpaces) || 50) * 0.35)),
+      distance: calcDistanceKm(lat, lon),
       fee: {
+        type: p.fee?.type || '무료',
         basic: p.fee?.basic ?? 0,
+        basicTime: p.fee?.basicTime ?? 30,
         additional: p.fee?.additional ?? 0,
+        additionalTime: p.fee?.additionalTime ?? 10,
+        daily: p.fee?.daily ?? 0,
+        monthly: p.fee?.monthly ?? 0,
       },
       operatingHours: p.operatingHours || '정보 없음',
-      latitude: Number(p.latitude),
-      longitude: Number(p.longitude),
+      operatingDays: p.operatingDays || '',
+      latitude: lat,
+      longitude: lon,
       type: p.type === 'public' ? 'public' : 'private',
+      parkingType: p.parkingType,
       feeInfo: p.feeInfo,
-      prediction: generatePredictionData(idx + 1),
+      hasDisabledParking: p.hasDisabledParking,
+      managingOrg: p.managingOrg,
+      phone: p.phone,
+      prediction: generatePredictionData(p.id?.toString() || '1'),
     };
   });
-
-// 기존 소수 샘플 (CSV가 비어있을 경우 대비)
-const seedParkingLots: ParkingLot[] = [
-  {
-    id: 1,
-    name: '불당 공영주차장',
-    address: '충남 천안시 서북구 불당동 123',
-    totalSpaces: 150,
-    availableSpaces: 45,
-    distance: 0.3,
-    fee: { basic: 1000, additional: 500 },
-    operatingHours: '24시간',
-    latitude: 36.8151,
-    longitude: 127.1139,
-    type: 'public',
-    prediction: generatePredictionData(1)
-  },
-  {
-    id: 2,
-    name: '신부 커뮤니티센터 주차장',
-    address: '충남 천안시 서북구 신부동 456',
-    totalSpaces: 80,
-    availableSpaces: 12,
-    distance: 0.5,
-    fee: { basic: 800, additional: 400 },
-    operatingHours: '06:00-22:00',
-    latitude: 36.8201,
-    longitude: 127.1189,
-    type: 'public'
-  },
-  {
-    id: 3,
-    name: '갤러리아백화점 주차장',
-    address: '충남 천안시 서북구 불당동 789',
-    totalSpaces: 300,
-    availableSpaces: 120,
-    distance: 0.7,
-    fee: { basic: 2000, additional: 1000 },
-    operatingHours: '10:00-22:00',
-    latitude: 36.8101,
-    longitude: 127.1089,
-    type: 'private'
-  },
-  {
-    id: 4,
-    name: '천안터미널 공영주차장',
-    address: '충남 천안시 동남구 터미널길 12',
-    totalSpaces: 200,
-    availableSpaces: 5,
-    distance: 1.2,
-    fee: { basic: 1500, additional: 700 },
-    operatingHours: '24시간',
-    latitude: 36.8051,
-    longitude: 127.1289,
-    type: 'public'
-  },
-  {
-    id: 5,
-    name: '야우리 공영주차장',
-    address: '충남 천안시 동남구 야우리 34',
-    totalSpaces: 100,
-    availableSpaces: 78,
-    distance: 1.5,
-    fee: { basic: 1000, additional: 500 },
-    operatingHours: '24시간',
-    latitude: 36.8251,
-    longitude: 127.1339,
-    type: 'public'
-  }
-];
-
-export const mockParkingLots: ParkingLot[] =
-  csvParkingLots.length > 0 ? csvParkingLots : seedParkingLots;
 
 export const mockParkingHistory: ParkingHistory[] = [
   {
     id: 1,
-    parkingLotName: '불당 공영주차장',
+    parkingLotName: '불당 제1공영주차장',
     startTime: '14:30',
     endTime: '17:20',
     duration: 170,
@@ -161,7 +106,7 @@ export const mockParkingHistory: ParkingHistory[] = [
   },
   {
     id: 2,
-    parkingLotName: '갤러리아백화점 주차장',
+    parkingLotName: '쌍용 제1공영주차장',
     startTime: '10:15',
     endTime: '12:45',
     duration: 150,
@@ -170,7 +115,7 @@ export const mockParkingHistory: ParkingHistory[] = [
   },
   {
     id: 3,
-    parkingLotName: '신부 커뮤니티센터 주차장',
+    parkingLotName: '신부 제1공영주차장',
     startTime: '19:00',
     endTime: '21:30',
     duration: 150,
@@ -187,11 +132,16 @@ export const mockVehicle: Vehicle = {
 
 export const violationHotspots = violationSummary;
 
-// 임시 지오코딩 없는 핫스팟 좌표: 주차장/기준점 근처로 매핑
-export const violationHotspotsWithCoords = (violationSummary.hotspots || []).slice(0, 20).map((h: any, idx: number) => ({
-  place: h.place,
-  count: h.count,
-  lat: center.lat + (Math.random() * 0.02 - 0.01),
-  lon: center.lon + (Math.random() * 0.02 - 0.01),
-  id: idx + 1,
-}));
+// 불법주정차 핫스팟 좌표 (상위 동별 데이터)
+export const violationHotspotsWithCoords = [
+  { place: '성정동', count: 15186, lat: 36.820, lon: 127.139, id: 1 },
+  { place: '불당동', count: 14446, lat: 36.811, lon: 127.109, id: 2 },
+  { place: '두정동', count: 9993, lat: 36.832, lon: 127.139, id: 3 },
+  { place: '백석동', count: 7516, lat: 36.835, lon: 127.155, id: 4 },
+  { place: '성성동', count: 6315, lat: 36.839, lon: 127.117, id: 5 },
+  { place: '신부동', count: 4633, lat: 36.818, lon: 127.158, id: 6 },
+  { place: '쌍용동', count: 3410, lat: 36.800, lon: 127.123, id: 7 },
+  { place: '차암동', count: 3217, lat: 36.810, lon: 127.145, id: 8 },
+  { place: '신방동', count: 2697, lat: 36.786, lon: 127.122, id: 9 },
+  { place: '직산읍', count: 2210, lat: 36.879, lon: 127.150, id: 10 },
+];

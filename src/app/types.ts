@@ -4,25 +4,47 @@ export interface PredictionData {
   time: string;
   occupancyRate: number;
   confidence: number;
+  factors?: {
+    hourly: number;
+    daily: number;
+    location: number;
+    fee: number;
+    capacity: number;
+  };
+}
+
+export interface ParkingFee {
+  type?: string;
+  basic: number;
+  basicTime?: number;
+  additional: number;
+  additionalTime?: number;
+  daily?: number;
+  monthly?: number;
 }
 
 export interface ParkingLot {
-  id: number;
+  id: string;
   externalId?: string;
   name: string;
   address: string;
   totalSpaces: number;
-  availableSpaces: number;
-  distance: number;
-  fee: {
-    basic: number;
-    additional: number;
-  };
-  operatingHours: string;
+  availableSpaces?: number | null;
+  distance?: number;
+  fee: ParkingFee;
+  operatingHours?: string;
+  operatingDays?: string;
   latitude: number;
   longitude: number;
   feeInfo?: string;
   type: ParkingLotType;
+  parkingType?: string;  // 노상/노외/부설
+  hasDisabledParking?: boolean;
+  managingOrg?: string;
+  phone?: string;
+  paymentMethods?: string;
+  facilities?: string[];
+  dataDate?: string;
   prediction?: PredictionData[];
 }
 
@@ -40,4 +62,21 @@ export interface Vehicle {
   licensePlate: string;
   model: string;
   color: string;
+}
+
+export interface PatternsSummary {
+  total_violations: number;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  peak_hours: number[];
+  top_dongs: string[];
+  weights_used: {
+    hourly: number;
+    daily: number;
+    location: number;
+    fee: number;
+    capacity: number;
+  };
 }

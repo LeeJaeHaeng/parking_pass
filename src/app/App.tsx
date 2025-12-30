@@ -20,7 +20,7 @@ type User = {
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [selectedParkingId, setSelectedParkingId] = useState<number | null>(null);
+  const [selectedParkingId, setSelectedParkingId] = useState<string | null>(null);
   const [user, setUser] = useState<User>(() => {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('authUser') : null;
     return stored ? JSON.parse(stored) : null;
@@ -57,7 +57,7 @@ export default function App() {
         }} />;
       case 'detail':
         return <ParkingDetailPage 
-          parkingId={selectedParkingId || 1} 
+          parkingId={selectedParkingId || 'P0001'} 
           onBack={() => setCurrentPage('home')}
           onStartParking={() => setCurrentPage('my-parking')}
         />;

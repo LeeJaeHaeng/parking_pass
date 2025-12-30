@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, MapPin, Clock, DollarSign, Phone, Navigation2, Calendar, TrendingUp, AlertCircle } from 'lucide-react';
-import { mockParkingLots, generatePredictionData } from '../data/mockData';
+import parkingLotsSource from '../data/parkingLots.json';
 import { api } from '../api';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -11,18 +11,61 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 interface ParkingDetailPageProps {
-  parkingId: number;
+  parkingId: string;
   onBack: () => void;
   onStartParking: () => void;
 }
 
 export default function ParkingDetailPage({ parkingId, onBack, onStartParking }: ParkingDetailPageProps) {
   const [selectedTime, setSelectedTime] = useState('30');
-  const [predictionData, setPredictionData] = useState(generatePredictionData(parkingId));
+  const [predictionData, setPredictionData] = useState<any[]>([]);
   const [loadingPred, setLoadingPred] = useState(false);
-  const parking = mockParkingLots.find(lot => lot.id === parkingId) || mockParkingLots[0];
+  const [realDistance, setRealDistance] = useState<number | null>(null);
+  const [parking, setParking] = useState<any>(() => {
+    const list = parkingLotsSource as any[];
+    return list.find((p) => p.id === parkingId) || list[0];
+  });
+
+  // 거리 계산 로직
+  useEffect(() => {
+    if (navigator.geolocation && parking) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat1 = position.coords.latitude;
+          const lon1 = position.coords.longitude;
+          const lat2 = parking.latitude;
+          const lon2 = parking.longitude;
+          
+          if (lat2 && lon2) {
+            const R = 6371; // km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const d = R * c;
+            setRealDistance(Math.round(d * 10) / 10);
+          }
+        },
+        (error) => {
+          console.error("Location access denied", error);
+        }
+      );
+    }
+  }, [parking]);
 
   useEffect(() => {
+    const loadParking = async () => {
+      try {
+        const p = await api.getParkingLot(parkingId);
+        setParking(p);
+      } catch {
+        const list = parkingLotsSource as any[];
+        setParking(list.find((p) => p.id === parkingId) || list[0]);
+      }
+    };
+    loadParking();
     const load = async () => {
       setLoadingPred(true);
       try {
@@ -30,7 +73,7 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
         // recharts expects occupancyRate field already; api normalizes it
         setPredictionData(data as any);
       } catch (e) {
-        setPredictionData(generatePredictionData(parkingId));
+        setPredictionData([]);
       } finally {
         setLoadingPred(false);
       }
@@ -46,13 +89,17 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
   };
 
   const getPredictionForTime = (minutes: number) => {
+    if (!predictionData || predictionData.length === 0) {
+      return { occupancyRate: 70, confidence: 80 };
+    }
     const hourIndex = Math.floor(minutes / 60);
     if (hourIndex >= predictionData.length) return predictionData[predictionData.length - 1];
     return predictionData[hourIndex];
   };
 
   const prediction = getPredictionForTime(parseInt(selectedTime));
-  const estimatedAvailable = Math.round(parking.totalSpaces * (100 - prediction.occupancyRate) / 100);
+  const total = parking.totalSpaces || 0;
+  const estimatedAvailable = total > 0 ? Math.max(0, Math.round(total * (100 - (prediction.occupancyRate || 0)) / 100)) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -203,16 +250,21 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
               <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm text-gray-600 mb-1">운영 시간</p>
-                <p>{parking.operatingHours}</p>
+                <p className="whitespace-pre-wrap text-sm">{parking.operatingHours}</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
               <DollarSign className="w-5 h-5 text-gray-400 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-1">주차 요금</p>
-                <p>기본 {parking.fee.basic.toLocaleString()}원 (30분)</p>
-                <p className="text-sm text-gray-500">추가 {parking.fee.additional.toLocaleString()}원 / 10분</p>
+                <p className="text-sm text-gray-600 mb-1">주차 요금 ({parking.fee.type || '정보없음'})</p>
+                <div className="space-y-1 text-sm">
+                  <p>기본: {parking.fee.basic?.toLocaleString() ?? 0}원 ({parking.fee.basicTime ?? 0}분)</p>
+                  <p>추가: {parking.fee.additional?.toLocaleString() ?? 0}원 ({parking.fee.additionalTime ?? 0}분)</p>
+                  {parking.fee.daily ? <p>1일 주차권: {parking.fee.daily.toLocaleString()}원</p> : null}
+                  {parking.fee.monthly ? <p>월 정기권: {parking.fee.monthly.toLocaleString()}원</p> : null}
+                  {parking.paymentMethods && <p className="text-gray-500 mt-1 text-xs">결제: {parking.paymentMethods}</p>}
+                </div>
               </div>
             </div>
 
@@ -220,7 +272,7 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
               <Navigation2 className="w-5 h-5 text-gray-400 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm text-gray-600 mb-1">거리</p>
-                <p>현재 위치에서 {parking.distance}km</p>
+                <p>현재 위치에서 {realDistance !== null ? `${realDistance}km` : (parking.distance ? `${parking.distance}km` : '계산 중...')}</p>
               </div>
             </div>
 
@@ -228,7 +280,8 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
               <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm text-gray-600 mb-1">문의</p>
-                <p className="text-blue-600">041-XXX-XXXX</p>
+                <p className="text-blue-600">{parking.phone || '-'}</p>
+                {parking.managingOrg && <p className="text-xs text-gray-400 mt-1">관리: {parking.managingOrg}</p>}
               </div>
             </div>
           </div>
@@ -236,14 +289,24 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
 
         {/* Amenities */}
         <Card className="m-4 p-4">
-          <h3 className="mb-3">편의 시설</h3>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">CCTV</Badge>
-            <Badge variant="outline">여성 우선 주차</Badge>
-            <Badge variant="outline">장애인 주차</Badge>
-            <Badge variant="outline">전기차 충전</Badge>
-            <Badge variant="outline">실내 주차</Badge>
+          <h3 className="mb-3">편의 시설 및 정보</h3>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {parking.facilities && parking.facilities.length > 0 ? (
+              parking.facilities.map((fac: string, idx: number) => (
+                <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  {fac}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-gray-500">등록된 편의시설 정보가 없습니다.</span>
+            )}
           </div>
+          {parking.feeInfo && (
+             <div className="bg-gray-50 p-3 rounded text-sm text-gray-600">
+               <p className="font-semibold mb-1">특이사항</p>
+               {parking.feeInfo}
+             </div>
+          )}
         </Card>
       </div>
 

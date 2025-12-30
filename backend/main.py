@@ -1,18 +1,23 @@
+"""
+천안 AI 파킹 패스 - 백엔드 API
+실제 CSV 데이터 + 불법주정차 패턴 + 날씨/휴일 정보 기반 AI 예측
+"""
+import json
 import os
+import math
+import requests
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Tuple
 
 import numpy as np
 import pandas as pd
-import requests
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
-from prophet import Prophet
-from sqlalchemy import Column, Integer, String, DateTime, create_engine, func
+from sqlalchemy import Column, Integer, String, DateTime, Float, create_engine, func
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 app = FastAPI(title="Cheonan AI Parking Pass API")
@@ -20,15 +25,21 @@ app = FastAPI(title="Cheonan AI Parking Pass API")
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 개발/테스트: 전체 허용
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ===== 환경 변수 로드 (.env.local 우선) =====
+# ===== 경로 설정 =====
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+BACKEND_DIR = Path(__file__).resolve().parent
+PARKING_JSON = PROJECT_ROOT / "src" / "app" / "data" / "parkingLots.json"
+VIOLATION_PATTERNS_JSON = BACKEND_DIR / "violation_patterns.json"
+
+# ===== 환경 변수 로드 =====
 def load_env():
-    for candidate in [Path(__file__).resolve().parent.parent / ".env.local", Path(__file__).resolve().parent.parent / ".env"]:
+    for candidate in [PROJECT_ROOT / ".env.local", PROJECT_ROOT / ".env"]:
         if candidate.exists():
             for line in candidate.read_text(encoding="utf-8").splitlines():
                 if not line or line.strip().startswith("#") or "=" not in line:
@@ -40,10 +51,7 @@ def load_env():
 load_env()
 
 # ===== 데이터베이스 설정 =====
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///./dev.db",  # 기본값: 로컬 SQLite
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
 engine = create_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -76,17 +84,14 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 # ===== ORM 모델 =====
 class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-
 class PaymentHistory(Base):
     __tablename__ = "payment_history"
-
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=True)
     parking_lot_name = Column(String, nullable=False)
@@ -96,26 +101,44 @@ class PaymentHistory(Base):
     fee = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+class Vehicle(Base):
+    __tablename__ = "vehicles"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
+    license_plate = Column(String, nullable=False)
+    model = Column(String, nullable=True)
+    color = Column(String, nullable=True)
+    is_primary = Column(Integer, default=0) # SQLite boolean 호환
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 # ===== Pydantic 모델 =====
-class ParkingLot(BaseModel):
-    id: int
+class ParkingLotOut(BaseModel):
+    id: str
     name: str
     address: str
-    total_spaces: int
-    available_spaces: int
+    totalSpaces: int
+    availableSpaces: Optional[int] = None
     latitude: float
     longitude: float
-    fee_basic: int
-    fee_additional: int
+    type: str
+    parkingType: Optional[str] = None
+    operatingHours: Optional[str] = None
+    operatingDays: Optional[str] = None
+    fee: Dict[str, Any]
+    feeInfo: Optional[str] = None
+    hasDisabledParking: Optional[bool] = None
+    managingOrg: Optional[str] = None
+    phone: Optional[str] = None
 
 class PredictionRequest(BaseModel):
-    parking_id: int
+    parking_id: str
     hours_ahead: int = 24
 
 class PredictionData(BaseModel):
     time: str
     occupancy_rate: float
     confidence: float
+    factors: Optional[Dict[str, float]] = None
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -133,7 +156,6 @@ class Token(BaseModel):
     email: EmailStr
     name: Optional[str] = None
 
-
 class PaymentCreate(BaseModel):
     parking_lot_name: str
     start_time: Optional[str] = None
@@ -141,7 +163,6 @@ class PaymentCreate(BaseModel):
     duration: Optional[int] = None
     fee: int
     user_id: Optional[int] = None
-
 
 class PaymentOut(BaseModel):
     id: int
@@ -155,104 +176,456 @@ class PaymentOut(BaseModel):
     class Config:
         orm_mode = True
 
-# Mock 데이터 (실제로는 DB에서 가져옴)
-mock_parking_data = [
-    {
-        "id": 1,
-        "name": "불당 공영주차장",
-        "address": "충남 천안시 서북구 불당동 123",
-        "total_spaces": 150,
-        "available_spaces": 45,
-        "latitude": 36.8151,
-        "longitude": 127.1139,
-        "fee_basic": 1000,
-        "fee_additional": 500
+class VehicleCreate(BaseModel):
+    user_id: int
+    license_plate: str
+    model: Optional[str] = None
+    color: Optional[str] = None
+    is_primary: bool = False
+
+class VehicleOut(BaseModel):
+    id: int
+    license_plate: str
+    model: Optional[str] = None
+    color: Optional[str] = None
+    is_primary: bool
+    
+    class Config:
+        orm_mode = True
+
+# ===== 데이터 로드 =====
+_parking_lots_cache: List[Dict] = []
+_violation_patterns_cache: Dict = {}
+
+def load_parking_lots() -> List[Dict]:
+    global _parking_lots_cache
+    if _parking_lots_cache:
+        return _parking_lots_cache
+    
+    if PARKING_JSON.exists():
+        with open(PARKING_JSON, 'r', encoding='utf-8') as f:
+            _parking_lots_cache = json.load(f)
+    return _parking_lots_cache
+
+def load_violation_patterns() -> Dict:
+    global _violation_patterns_cache
+    if _violation_patterns_cache:
+        return _violation_patterns_cache
+    
+    if VIOLATION_PATTERNS_JSON.exists():
+        with open(VIOLATION_PATTERNS_JSON, 'r', encoding='utf-8') as f:
+            _violation_patterns_cache = json.load(f)
+    return _violation_patterns_cache
+
+def extract_dong_from_address(address: str) -> str:
+    if not address:
+        return ""
+    parts = address.split()
+    for part in parts:
+        if part.endswith('동') and len(part) >= 2 and not part.endswith('읍동'):
+            return part
+    for part in parts:
+        if part.endswith('읍') or part.endswith('면'):
+            return part
+    return ""
+
+# ===== 날씨 및 휴일 API 유틸리티 =====
+
+# 기상청 격자 변환 (위경도 -> X,Y)
+def map_to_grid(lat, lon, code=0):
+    NX = 149            # X축 격자점 수
+    NY = 253            # Y축 격자점 수
+    items = dict()
+    items['re'] = 6371.00877    # 지도반경
+    items['grid'] = 5.0         # 격자간격 (km)
+    items['slat1'] = 30.0       # 표준위도 1
+    items['slat2'] = 60.0       # 표준위도 2
+    items['olon'] = 126.0       # 기준점 경도
+    items['olat'] = 38.0        # 기준점 위도
+    items['xo'] = 210 / items['grid']   # 기준점 X좌표
+    items['yo'] = 675 / items['grid']   # 기준점 Y좌표
+    
+    DEGRAD = math.pi / 180.0
+    RADDEG = 180.0 / math.pi
+    
+    re = items['re'] / items['grid']
+    slat1 = items['slat1'] * DEGRAD
+    slat2 = items['slat2'] * DEGRAD
+    olon = items['olon'] * DEGRAD
+    olat = items['olat'] * DEGRAD
+    
+    sn = math.tan(math.pi * 0.25 + slat2 * 0.5) / math.tan(math.pi * 0.25 + slat1 * 0.5)
+    sn = math.log(math.cos(slat1) / math.cos(slat2)) / math.log(sn)
+    sf = math.tan(math.pi * 0.25 + slat1 * 0.5)
+    sf = math.pow(sf, sn) * math.cos(slat1) / sn
+    ro = math.tan(math.pi * 0.25 + olat * 0.5)
+    ro = re * sf / math.pow(ro, sn)
+    
+    ra = math.tan(math.pi * 0.25 + lat * DEGRAD * 0.5)
+    ra = re * sf / math.pow(ra, sn)
+    
+    theta = lon * DEGRAD - olon
+    if theta > math.pi:
+        theta -= 2.0 * math.pi
+    if theta < -math.pi:
+        theta += 2.0 * math.pi
+    theta *= sn
+    
+    x = (ra * math.sin(theta)) + items['xo']
+    y = (ro - ra * math.cos(theta)) + items['yo']
+    
+    return int(x + 1.5), int(y + 1.5)
+
+def get_vilage_fcst_base_time(now: datetime) -> Tuple[str, str]:
+    """단기예보 Base Time 계산 (02, 05, 08, 11, 14, 17, 20, 23시 + 10분)"""
+    # API 제공 시각을 고려해 15분 전 시간을 기준으로 계산
+    target = now - timedelta(minutes=15)
+    
+    hour = target.hour
+    if hour < 2:
+        base_hour = 23
+        base_date = (target - timedelta(days=1)).strftime("%Y%m%d")
+    else:
+        base_hour = ((hour - 2) // 3) * 3 + 2
+        base_date = target.strftime("%Y%m%d")
+        
+    return base_date, f"{base_hour:02d}00"
+
+async def fetch_real_weather(lat: float, lon: float):
+    """기상청 단기예보 조회 (강수확률 포함)"""
+    api_key = os.getenv("VITE_KMA_API_KEY") or os.getenv("KMA_API_KEY")
+    if not api_key or api_key == "your_kma_key":
+        return None
+    
+    nx, ny = map_to_grid(lat, lon)
+    base_date, base_time = get_vilage_fcst_base_time(datetime.now())
+    
+    url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
+    params = {
+        "serviceKey": api_key,
+        "pageNo": "1",
+        "numOfRows": "1000",
+        "dataType": "JSON",
+        "base_date": base_date,
+        "base_time": base_time,
+        "nx": nx,
+        "ny": ny
     }
-]
+    
+    try:
+        # 동기 요청 (간단 구현)
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            items = data['response']['body']['items']['item']
+            
+            # 가장 빠른 예측 시간의 데이터 수집
+            weather = {}
+            target_fcst_time = None
+            
+            for item in items:
+                # 첫 번째 나오는 fcstTime을 타겟으로 잡음 (가장 가까운 미래)
+                if target_fcst_time is None:
+                    target_fcst_time = item['fcstTime']
+                
+                if item['fcstTime'] == target_fcst_time:
+                    cat = item['category']
+                    val = item['fcstValue']
+                    
+                    if cat == 'TMP': # 1시간 기온
+                        weather['temperature'] = float(val)
+                    elif cat == 'POP': # 강수확률
+                        weather['pop'] = int(val)
+                    elif cat == 'PTY': # 강수형태
+                        weather['pty'] = int(val)
+                    elif cat == 'SKY': # 하늘상태 (1:맑음, 3:구름많음, 4:흐림)
+                        weather['sky'] = int(val)
 
-# 기상청 API에서 날씨 데이터 가져오기 (mock -> shape 통일)
-def get_weather_data():
-    # TODO: 기상청 단기예보 API 연결 및 지역/위치별 데이터 매핑
-    return {
-        "temperature": 18,
-        "condition": "cloudy",
-        "precipitationProbability": 20,
+            # 상태 매핑
+            condition = "sunny"
+            if weather.get('pty', 0) > 0:
+                pty = weather.get('pty')
+                if pty in [1, 5, 4]: condition = "rainy" # 비, 빗방울, 소나기
+                elif pty in [2, 3]: condition = "snowy"  # 비/눈, 눈
+            elif weather.get('sky', 1) > 2:
+                condition = "cloudy"
+            
+            return {
+                "temperature": weather.get('temperature', 0),
+                "condition": condition,
+                "precipitationProbability": weather.get('pop', 0),
+                "rain_mm": 0 # 단기예보에는 강수량(PCP)이 '강수없음' 등으로 문자열로 옴, 처리 복잡해서 생략
+            }
+    except Exception as e:
+        print(f"Weather API Error: {e}")
+        return None
+    return None
+
+async def check_is_holiday(date_str: str =  None):
+    """특일(공휴일) 정보 조회"""
+    if not date_str:
+        date_str = datetime.now().strftime("%Y%m%d")
+    
+    api_key = os.getenv("VITE_HOLIDAY_API_KEY") or os.getenv("HOLIDAY_API_KEY")
+    if not api_key or api_key == "your_holiday_key":
+        # 주말 체크만
+        dt = datetime.strptime(date_str, "%Y%m%d")
+        return dt.weekday() >= 5
+        
+    year = date_str[:4]
+    month = date_str[4:6]
+    
+    url = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
+    params = {
+        "serviceKey": api_key,
+        "solYear": year,
+        "solMonth": month,
+        "_type": "json"
     }
+    
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            # items가 없거나 비어있는 경우 체크
+            if "items" in data["response"]["body"] and data["response"]["body"]["items"]:
+                items = data["response"]["body"]["items"]["item"]
+                if isinstance(items, dict):
+                    items = [items]
+                for item in items:
+                    if str(item["locdate"]) == date_str and item["isHoliday"] == "Y":
+                        return True
+    except Exception as e:
+        print(f"Holiday API Error: {e}")
+        pass
+    
+    # 주말 체크
+    dt = datetime.strptime(date_str, "%Y%m%d")
+    return dt.weekday() >= 5
 
-# Prophet 모델로 예측 생성
-def generate_prediction(parking_id: int, hours_ahead: int = 24):
-    # Mock historical data 생성
-    dates = pd.date_range(start='2024-01-01', periods=100, freq='H')
-    occupancy = np.random.normal(60, 20, 100)
-    occupancy = np.clip(occupancy, 0, 100)
+# ===== 가중치 기반 예측 엔진 =====
+class PredictionEngine:
+    
+    WEIGHTS = {
+        'hourly': 0.30,
+        'daily': 0.15,      # 요일 비중 축소 (휴일에 포함)
+        'location': 0.20,
+        'fee': 0.10,
+        'capacity': 0.10,
+        'weather': 0.10,    # 신규
+        'holiday': 0.05     # 신규
+    }
+    
+    def __init__(self):
+        self.patterns = load_violation_patterns()
+        self.parking_lots = {lot['id']: lot for lot in load_parking_lots()}
+        
+        # 캐싱된 날씨/휴일 (메모리)
+        self.cached_weather = None
+        self.weather_updated = None
+        self.is_holiday_today = False
+        self.initialized_extras = False
 
-    df = pd.DataFrame({'ds': dates, 'y': occupancy})
+    async def update_extras(self):
+        """날씨 및 휴일 정보 업데이트"""
+        now = datetime.now()
+        # 10분에 한번 날씨 업데이트
+        if not self.cached_weather or not self.weather_updated or (now - self.weather_updated).total_seconds() > 600:
+            # 천안시청 기준 좌표
+            lat, lon = 36.815, 127.113
+            w_data = await fetch_real_weather(lat, lon)
+            if w_data:
+                self.cached_weather = w_data
+                self.weather_updated = now
+            else: 
+                # 실패시 기본값 (흐림)
+                self.cached_weather = {"temperature": 18, "condition": "cloudy", "weather_score": 0}
+        
+        # 휴일 여부 (하루 한번만 체크해도 됨)
+        if not self.initialized_extras:
+            self.is_holiday_today = await check_is_holiday()
+            self.initialized_extras = True
 
-    # Prophet 모델 학습
-    model = Prophet()
-    model.fit(df)
+    def get_hourly_weight(self, hour: int) -> float:
+        if not self.patterns or 'hourly' not in self.patterns:
+            return 0.5
+        return self.patterns['hourly'].get(str(hour), {}).get('weight', 0.5)
+    
+    def get_daily_weight(self, weekday: int) -> float:
+        if not self.patterns or 'daily' not in self.patterns:
+            return 0.85
+        return self.patterns['daily'].get(str(weekday), {}).get('weight', 0.85)
+    
+    def get_location_weight(self, dong: str) -> float:
+        if not self.patterns or 'by_dong' not in self.patterns:
+            return 0.5
+        return self.patterns['by_dong'].get(dong, {}).get('weight', 0.3)
+    
+    def get_fee_weight(self, fee_type: str) -> float:
+        return 1.2 if fee_type == '무료' else 0.8
+    
+    def get_capacity_weight(self, total_spaces: int) -> float:
+        return 0.8 if total_spaces >= 100 else 1.1
 
-    # 미래 예측
-    future = model.make_future_dataframe(periods=hours_ahead, freq='H')
-    forecast = model.predict(future)
+    def get_weather_weight(self, parking_type: str) -> float:
+        """날씨에 따른 주차장 선호도 (실내/실외)"""
+        if not self.cached_weather:
+            return 1.0
+        
+        cond = self.cached_weather.get('condition', 'sunny')
+        # 비/눈 올 때: 실내(indoor/building) 선호, 노외/노상(outdoor) 비선호
+        if cond in ['rainy', 'snowy']:
+            # parkingType: '노외', '노상', '부설' 등
+            if parking_type and '부설' in parking_type: # 보통 건물 내
+                return 1.2
+            else:
+                return 0.8
+        return 1.0 # 맑음
 
-    predictions = []
-    for i in range(hours_ahead):
-        time_str = (datetime.now() + timedelta(hours=i+1)).strftime('%H:00')
-        pred = forecast.iloc[len(df) + i]
-        occupancy = float(pred['yhat'])
-        band = float(pred['yhat_upper'] - pred['yhat_lower'])
-        occupancy = max(0.0, min(100.0, occupancy))
+    def get_holiday_weight(self, is_holiday: bool) -> float:
+        """휴일 여부"""
+        return 1.2 if is_holiday else 0.9
 
-        # band(예측 구간 폭)에 따라 60~95% 사이로 신뢰도 계산 (폭이 작을수록 95% 근접)
-        # band가 10 이하이면 95%, band가 60 이상이면 60%까지 내려감
-        conf = 95.0 - min(35.0, max(0.0, (band - 10) * (35.0 / 50.0)))
-        confidence = round(conf, 1)
-        confidence = max(60.0, min(95.0, confidence))
-        predictions.append({
-            "time": time_str,
-            "occupancy_rate": round(occupancy, 1),
-            "confidence": round(confidence, 1)
-        })
+    async def calculate_occupancy(
+        self,
+        parking_id: str,
+        target_time: datetime
+    ) -> tuple:
+        await self.update_extras()
+        
+        parking_lot = self.parking_lots.get(parking_id)
+        if not parking_lot:
+            return 50.0, 60.0, {}
+        
+        hour = target_time.hour
+        weekday = target_time.weekday()
+        dong = extract_dong_from_address(parking_lot.get('address', ''))
+        fee_type = parking_lot.get('fee', {}).get('type', '무료')
+        total_spaces = parking_lot.get('totalSpaces', 50)
+        p_type = parking_lot.get('parkingType', '') # 노외/노상/부설
+        
+        # 가중치 계산
+        hourly_w = self.get_hourly_weight(hour)
+        daily_w = self.get_daily_weight(weekday)
+        location_w = self.get_location_weight(dong)
+        fee_w = self.get_fee_weight(fee_type)
+        capacity_w = self.get_capacity_weight(total_spaces)
+        weather_w = self.get_weather_weight(p_type)
+        holiday_w = self.get_holiday_weight(self.is_holiday_today)
+        
+        # 종합 점수 (0-1)
+        weighted_score = (
+            hourly_w * self.WEIGHTS['hourly'] +
+            daily_w * self.WEIGHTS['daily'] +
+            location_w * self.WEIGHTS['location'] +
+            fee_w * self.WEIGHTS['fee'] +
+            capacity_w * self.WEIGHTS['capacity'] +
+            weather_w * self.WEIGHTS['weather'] +
+            holiday_w * self.WEIGHTS['holiday']
+        )
+        
+        base_occupancy = 35
+        occupancy = base_occupancy + (weighted_score * 60)
+        occupancy = max(10, min(98, occupancy))
+        
+        confidence = self._calculate_confidence(dong, hour)
+        
+        factors = {
+            'hourly': round(hourly_w, 3),
+            'location': round(location_w, 3),
+            'weather': round(weather_w, 3),
+            'holiday': round(holiday_w, 3)
+        }
+        
+        return round(occupancy, 1), round(confidence, 1), factors
+    
+    def _calculate_confidence(self, dong: str, hour: int) -> float:
+        base = 75.0
+        if not self.patterns: return 60.0
+        cnt = self.patterns.get('total_count', 0)
+        if cnt >= 50000: base += 10
+        if dong and dong in self.patterns.get('by_dong', {}):
+            d_cnt = self.patterns['by_dong'][dong].get('count', 0)
+            if d_cnt >= 1000: base += 8
+        return min(95.0, base)
+    
+    async def generate_predictions(
+        self,
+        parking_id: str,
+        hours_ahead: int = 24
+    ) -> List[Dict]:
+        predictions = []
+        now = datetime.now()
+        for i in range(hours_ahead):
+            target_time = now + timedelta(hours=i+1)
+            occupancy, confidence, factors = await self.calculate_occupancy(parking_id, target_time)
+            
+            predictions.append({
+                "time": target_time.strftime('%H:00'),
+                "occupancy_rate": occupancy,
+                "confidence": confidence,
+                "factors": factors
+            })
+        return predictions
 
-    return predictions
+_prediction_engine: Optional[PredictionEngine] = None
 
-@app.get("/parking-lots", response_model=List[ParkingLot])
+def get_prediction_engine() -> PredictionEngine:
+    global _prediction_engine
+    if _prediction_engine is None:
+        _prediction_engine = PredictionEngine()
+    return _prediction_engine
+
+# ===== API 엔드포인트 =====
+@app.get("/parking-lots", response_model=List[ParkingLotOut])
 async def get_parking_lots():
-    return [ParkingLot(**lot) for lot in mock_parking_data]
+    lots = load_parking_lots()
+    return [ParkingLotOut(**lot) for lot in lots if lot.get('latitude') and lot.get('longitude')]
 
-@app.get("/parking-lots/{parking_id}", response_model=ParkingLot)
-async def get_parking_lot(parking_id: int):
-    lot = next((lot for lot in mock_parking_data if lot["id"] == parking_id), None)
+@app.get("/parking-lots/{parking_id}", response_model=ParkingLotOut)
+async def get_parking_lot(parking_id: str):
+    lots = load_parking_lots()
+    lot = next((l for l in lots if l["id"] == parking_id), None)
     if not lot:
         raise HTTPException(status_code=404, detail="Parking lot not found")
-    return ParkingLot(**lot)
+    return ParkingLotOut(**lot)
 
 @app.post("/predictions", response_model=List[PredictionData])
 async def get_predictions(request: PredictionRequest):
-    predictions = generate_prediction(request.parking_id, request.hours_ahead)
+    engine = get_prediction_engine()
+    # async method 호출
+    predictions = await engine.generate_predictions(request.parking_id, request.hours_ahead)
     return [PredictionData(**pred) for pred in predictions]
 
 @app.get("/weather")
 async def get_weather():
-    return get_weather_data()
+    # 실제 날씨 또는 캐시된 날씨 반환
+    engine = get_prediction_engine()
+    await engine.update_extras()
+    return engine.cached_weather or {
+        "temperature": 18,
+        "condition": "cloudy",
+        "precipitationProbability": 20
+    }
 
-# ===== 회원가입/로그인 =====
+@app.get("/patterns/summary")
+async def get_patterns_summary():
+    patterns = load_violation_patterns()
+    if not patterns: return {"error": "No patterns loaded"}
+    return {
+        "total_violations": patterns.get('total_count', 0),
+        "weights_used": PredictionEngine.WEIGHTS
+    }
+
+# Auth / Payments (기존 유지)
 @app.post("/auth/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == payload.email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="이미 가입된 이메일입니다.")
-
-    user = User(
-        email=payload.email,
-        name=payload.name,
-        password_hash=hash_password(payload.password),
-    )
+    if existing: raise HTTPException(status_code=400, detail="이미 가입된 이메일입니다.")
+    user = User(email=payload.email, name=payload.name, password_hash=hash_password(payload.password))
     db.add(user)
     db.commit()
     db.refresh(user)
-
     token = create_access_token({"sub": str(user.id), "email": user.email})
     return Token(access_token=token, user_id=user.id, email=user.email, name=user.name)
 
@@ -260,60 +633,75 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)):
 def login_user(payload: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다.")
-
+        raise HTTPException(status_code=401, detail="로그인 실패")
     token = create_access_token({"sub": str(user.id), "email": user.email})
     return Token(access_token=token, user_id=user.id, email=user.email, name=user.name)
 
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+    load_parking_lots()
+    load_violation_patterns()
 
-
-# ===== 결제/히스토리 =====
 @app.post("/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
 def create_payment(payload: PaymentCreate, db: Session = Depends(get_db)):
     record = PaymentHistory(
-        user_id=payload.user_id,
-        parking_lot_name=payload.parking_lot_name,
-        start_time=payload.start_time,
-        end_time=payload.end_time,
-        duration=payload.duration,
-        fee=payload.fee,
+        user_id=payload.user_id, parking_lot_name=payload.parking_lot_name,
+        start_time=payload.start_time, end_time=payload.end_time,
+        duration=payload.duration, fee=payload.fee
     )
     db.add(record)
     db.commit()
     db.refresh(record)
-    return PaymentOut(
-        id=record.id,
-        parkingLotName=record.parking_lot_name,
-        startTime=record.start_time,
-        endTime=record.end_time,
-        duration=record.duration,
-        fee=record.fee,
-        date=record.created_at.date().isoformat() if record.created_at else datetime.utcnow().date().isoformat(),
-    )
-
+    return PaymentOut(id=record.id, parkingLotName=record.parking_lot_name, startTime=record.start_time, endTime=record.end_time, duration=record.duration, fee=record.fee, date=record.created_at.date().isoformat())
 
 @app.get("/history", response_model=List[PaymentOut])
 def get_history(user_id: Optional[int] = None, db: Session = Depends(get_db)):
-    query = db.query(PaymentHistory).order_by(PaymentHistory.created_at.desc()).limit(50)
-    if user_id:
-        query = query.filter(PaymentHistory.user_id == user_id)
-    items = query.all()
-    return [
-        PaymentOut(
-            id=rec.id,
-            parkingLotName=rec.parking_lot_name,
-            startTime=rec.start_time,
-            endTime=rec.end_time,
-            duration=rec.duration,
-            fee=rec.fee,
-            date=rec.created_at.date().isoformat() if rec.created_at else datetime.utcnow().date().isoformat(),
-        )
-        for rec in items
-    ]
+    q = db.query(PaymentHistory).order_by(PaymentHistory.created_at.desc()).limit(50)
+    if user_id: q = q.filter(PaymentHistory.user_id == user_id)
+    return [PaymentOut(id=r.id, parkingLotName=r.parking_lot_name, startTime=r.start_time, endTime=r.end_time, duration=r.duration, fee=r.fee, date=r.created_at.date().isoformat()) for r in q.all()]
+
+@app.post("/vehicles", response_model=VehicleOut, status_code=status.HTTP_201_CREATED)
+def register_vehicle(payload: VehicleCreate, db: Session = Depends(get_db)):
+    # 기존 차량 확인
+    existing = db.query(Vehicle).filter(Vehicle.user_id == payload.user_id, Vehicle.license_plate == payload.license_plate).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="이미 등록된 차량 번호입니다.")
+    
+    # 대표 차량 설정 로직 (첫 차량이거나 is_primary=True인 경우)
+    count = db.query(Vehicle).filter(Vehicle.user_id == payload.user_id).count()
+    is_primary_val = 1 if payload.is_primary or count == 0 else 0
+    
+    if is_primary_val:
+        # 기존 대표 차량 해제
+        db.query(Vehicle).filter(Vehicle.user_id == payload.user_id).update({"is_primary": 0})
+    
+    vehicle = Vehicle(
+        user_id=payload.user_id,
+        license_plate=payload.license_plate,
+        model=payload.model,
+        color=payload.color,
+        is_primary=is_primary_val
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+    return VehicleOut(id=vehicle.id, license_plate=vehicle.license_plate, model=vehicle.model, color=vehicle.color, is_primary=bool(vehicle.is_primary))
+
+@app.get("/vehicles", response_model=List[VehicleOut])
+def get_vehicles(user_id: int, db: Session = Depends(get_db)):
+    vehicles = db.query(Vehicle).filter(Vehicle.user_id == user_id).all()
+    return [VehicleOut(id=v.id, license_plate=v.license_plate, model=v.model, color=v.color, is_primary=bool(v.is_primary)) for v in vehicles]
+
+@app.delete("/vehicles/{vehicle_id}")
+def delete_vehicle(vehicle_id: int, user_id: int, db: Session = Depends(get_db)):
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id, Vehicle.user_id == user_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="차량을 찾을 수 없습니다.")
+    db.delete(vehicle)
+    db.commit()
+    return {"message": "삭제되었습니다."}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

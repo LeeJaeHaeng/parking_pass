@@ -2,27 +2,28 @@ import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Clock, TrendingUp, LocateFixed, CloudRain, ThermometerSun } from 'lucide-react';
 import { api } from '../api';
 import { ParkingLot } from '../types';
-import { mockParkingLots } from '../data/mockData';
+import parkingLotsSource from '../data/parkingLots.json';
 import { KakaoMap } from '../components/KakaoMap';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 
 interface HomePageProps {
-  onParkingSelect: (id: number) => void;
+  onParkingSelect: (id: string) => void;
   onSearchClick: () => void;
 }
 
 type UserLocation = { lat: number; lon: number } | null;
 
 export default function HomePage({ onParkingSelect, onSearchClick }: HomePageProps) {
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'nearby'>('all');
-  const [parkingLots, setParkingLots] = useState<ParkingLot[]>(mockParkingLots);
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'nearby'>('nearby');
+  const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<UserLocation>(null);
   const [locError, setLocError] = useState<string | null>(null);
   const [weather, setWeather] = useState<{ temperature: number; condition: string; precipitationProbability: number } | null>(null);
-  const [sortBy, setSortBy] = useState<'congestion'>('congestion');
+  const [sortBy, setSortBy] = useState<'congestion' | 'distance' | 'price'>('congestion');
+  const [currentAddress, setCurrentAddress] = useState('위치 정보를 불러오는 중...');
 
   useEffect(() => {
     const fetchParkingLots = async () => {
@@ -33,20 +34,57 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
           ...lot,
           distance: lot.distance ?? 0,
         }));
-        // 백엔드가 모의 단일 데이터만 줄 때는 CSV 기반 모의 데이터로 대체
-        if (!normalized || normalized.length <= 5) {
-          normalized = mockParkingLots;
-        }
         setParkingLots(normalized);
       } catch (error) {
         console.error('Failed to fetch parking lots:', error);
-        setParkingLots(mockParkingLots);
+        setParkingLots((parkingLotsSource as any[]).map(normalizeLotFromJson));
       } finally {
         setLoading(false);
       }
     };
     fetchParkingLots();
   }, []);
+
+  // 초기 로딩 시 사용자 위치 자동 확보
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+          setLocError(null);
+        },
+        (err) => {
+          console.warn('위치 정보를 가져올 수 없어 전체 목록을 표시합니다.', err);
+          setLocError('위치 권한이 필요합니다.');
+          setSelectedFilter('all'); // 위치 실패 시 전체 보기로 변경
+        },
+        { enableHighAccuracy: false, timeout: 5000 }
+      );
+    } else {
+      setSelectedFilter('all');
+    }
+  }, []);
+
+  const normalizeLotFromJson = (lot: any): ParkingLot => ({
+    id: lot.id?.toString() || '',
+    externalId: lot.id,
+    name: lot.name,
+    address: lot.address,
+    totalSpaces: Number(lot.totalSpaces) || 0,
+    availableSpaces: Number(lot.availableSpaces) || 0,
+    distance: Number(lot.distance) || 0,
+    fee: { 
+      type: lot.fee?.type || '무료',
+      basic: lot.fee?.basic ?? 0, 
+      additional: lot.fee?.additional ?? 0 
+    },
+    operatingHours: lot.operatingHours || '정보 없음',
+    latitude: Number(lot.latitude),
+    longitude: Number(lot.longitude),
+    type: lot.type || 'public',
+    feeInfo: lot.feeInfo,
+    prediction: [],
+  });
 
   useEffect(() => {
     const fetchWeather = async () => {
@@ -61,17 +99,9 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
   }, []);
 
   const getFilteredLots = () => {
-    let filtered = [...parkingLots];
-    
-    if (selectedFilter === 'nearby') {
-      if (userLocation) {
-        filtered = filtered.filter(lot => lot.distance < 1.5);
-      } else {
-        filtered = filtered.filter(lot => lot.distance < 1);
-      }
-    }
-    
-    // 현 위치가 있으면 실제 거리 순으로, 없으면 distance 필드 순
+    let processed = [...parkingLots];
+
+    // 1. 거리 재계산 (현 위치 있을 경우 최우선 처리)
     if (userLocation) {
       const toRadians = (deg: number) => (deg * Math.PI) / 180;
       const EARTH_RADIUS_KM = 6371;
@@ -86,18 +116,34 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
       };
-      filtered = filtered.map((lot) => ({
+      processed = processed.map((lot) => ({
         ...lot,
         distance: calcDistance(lot.latitude, lot.longitude),
       }));
     }
 
-    // 정렬
-    return filtered.sort((a, b) => {
+    // 2. 필터링 로직
+    if (selectedFilter === 'nearby') {
+      // 가장 가까운 순으로 강제 정렬 후 상위 5개만 추출
+      // 유저 위치가 없으면 distance(0)가 의미 없으므로 기본 정렬 유지될 수 있으나, 
+      // 앱 시작 시 유저 위치를 가져오므로 대부분 정상 동작.
+      // 위치 권한 거부 시에는 distance 0인 상태에서 id순이나 원래 순서대로 5개 나올 것임.
+      processed.sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999));
+      return processed.slice(0, 5);
+    }
+
+    // 3. 전체 보기 시 사용자 지정 정렬
+    return processed.sort((a, b) => {
       if (sortBy === 'congestion') {
-        const rateA = a.availableSpaces / a.totalSpaces;
-        const rateB = b.availableSpaces / b.totalSpaces;
+        const rateA = (a.availableSpaces ?? 0) / (a.totalSpaces || 1);
+        const rateB = (b.availableSpaces ?? 0) / (b.totalSpaces || 1);
         return rateB - rateA; // 가용률 높은 순
+      }
+      if (sortBy === 'price') {
+        return (a.fee.basic ?? 0) - (b.fee.basic ?? 0); // 요금 낮은 순
+      }
+      if (sortBy === 'distance') {
+        return (a.distance ?? 0) - (b.distance ?? 0);
       }
       return 0;
     });
@@ -138,7 +184,7 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             <MapPin className="w-5 h-5" />
             <div className="flex-1">
               <p className="text-sm opacity-90">현재 위치</p>
-              <p className="text-sm">천안시 서북구 불당동</p>
+              <p className="text-sm">{currentAddress}</p>
             </div>
           </div>
         </div>
@@ -191,6 +237,8 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             onMarkerClick={(id) => {
               onParkingSelect(id);
             }}
+            userLocation={userLocation}
+            onAddressFound={setCurrentAddress}
           />
         </div>
       </div>
@@ -200,9 +248,13 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
         <div className="p-4 bg-white border-b border-gray-200">
           <div className="max-w-lg mx-auto flex items-center gap-3 text-sm text-gray-700">
             <ThermometerSun className="w-4 h-4 text-orange-500" />
-            <span>{weather.temperature}°C · {weather.condition}</span>
+            <span>
+              {weather.temperature}°C · {
+                { sunny: '맑음', cloudy: '흐림', rainy: '비', snowy: '눈' }[weather.condition] || weather.condition
+              }
+            </span>
             <CloudRain className="w-4 h-4 text-blue-500" />
-            <span>강수확률 {weather.precipitationProbability}%</span>
+            <span>강수확률 {weather.precipitationProbability ?? 0}%</span>
           </div>
         </div>
       )}
@@ -222,7 +274,7 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             size="sm"
             onClick={() => setSelectedFilter('nearby')}
           >
-            내 주변(1.5km)
+            가장 가까운 (Top 5)
           </Button>
           <Button
             variant={sortBy === 'congestion' ? 'default' : 'outline'}
@@ -230,6 +282,13 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             onClick={() => setSortBy('congestion')}
           >
             가용률순
+          </Button>
+          <Button
+            variant={sortBy === 'price' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortBy('price')}
+          >
+            요금순
           </Button>
         </div>
       </div>
@@ -257,8 +316,8 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
                 </div>
                 <p className="text-sm text-gray-600">{lot.address}</p>
               </div>
-              <Badge className={getOccupancyColor(lot.availableSpaces, lot.totalSpaces)}>
-                {getOccupancyStatus(lot.availableSpaces, lot.totalSpaces)}
+              <Badge className={getOccupancyColor(lot.availableSpaces ?? 0, lot.totalSpaces || 1)}>
+                {getOccupancyStatus(lot.availableSpaces ?? 0, lot.totalSpaces || 1)}
               </Badge>
             </div>
 
