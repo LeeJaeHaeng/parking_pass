@@ -116,11 +116,23 @@ async function safeFetch(url: string, options?: RequestInit) {
     ...(options?.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  const response = await fetch(url, { ...options, headers });
-  if (!response.ok) {
-    throw new Error(response.statusText || 'Request failed');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch(url, { ...options, headers, signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      throw new Error(response.statusText || 'Request failed');
+    }
+    return response.json();
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('서버 연결 실패 (시간 초과). PC 방화벽이 차단했을 수 있습니다.');
+    }
+    throw error;
   }
-  return response.json();
 }
 
 export const api = {
