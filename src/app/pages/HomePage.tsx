@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, TrendingUp, LocateFixed } from 'lucide-react';
+import { MapPin, Navigation, Clock, TrendingUp, LocateFixed, CloudRain, ThermometerSun } from 'lucide-react';
 import { api } from '../api';
 import { ParkingLot } from '../types';
 import { mockParkingLots } from '../data/mockData';
@@ -21,6 +21,7 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<UserLocation>(null);
   const [locError, setLocError] = useState<string | null>(null);
+  const [weather, setWeather] = useState<{ temperature: number; condition: string; precipitationProbability: number } | null>(null);
 
   useEffect(() => {
     const fetchParkingLots = async () => {
@@ -40,6 +41,18 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
       }
     };
     fetchParkingLots();
+  }, []);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const data = await api.getWeather();
+        setWeather(data);
+      } catch (e) {
+        setWeather(null);
+      }
+    };
+    fetchWeather();
   }, []);
 
   const getFilteredLots = () => {
@@ -168,6 +181,18 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
           />
         </div>
       </div>
+
+      {/* Weather summary */}
+      {weather && (
+        <div className="p-4 bg-white border-b border-gray-200">
+          <div className="max-w-lg mx-auto flex items-center gap-3 text-sm text-gray-700">
+            <ThermometerSun className="w-4 h-4 text-orange-500" />
+            <span>{weather.temperature}°C · {weather.condition}</span>
+            <CloudRain className="w-4 h-4 text-blue-500" />
+            <span>강수확률 {weather.precipitationProbability}%</span>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 p-4">

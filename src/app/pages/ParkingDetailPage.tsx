@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, MapPin, Clock, DollarSign, Phone, Navigation2, Calendar, TrendingUp, AlertCircle } from 'lucide-react';
 import { mockParkingLots, generatePredictionData } from '../data/mockData';
+import { api } from '../api';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -17,8 +18,25 @@ interface ParkingDetailPageProps {
 
 export default function ParkingDetailPage({ parkingId, onBack, onStartParking }: ParkingDetailPageProps) {
   const [selectedTime, setSelectedTime] = useState('30');
+  const [predictionData, setPredictionData] = useState(generatePredictionData(parkingId));
+  const [loadingPred, setLoadingPred] = useState(false);
   const parking = mockParkingLots.find(lot => lot.id === parkingId) || mockParkingLots[0];
-  const predictionData = generatePredictionData(parkingId);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoadingPred(true);
+      try {
+        const data = await api.getPredictions(parkingId, 24);
+        // recharts expects occupancyRate field already; api normalizes it
+        setPredictionData(data as any);
+      } catch (e) {
+        setPredictionData(generatePredictionData(parkingId));
+      } finally {
+        setLoadingPred(false);
+      }
+    };
+    load();
+  }, [parkingId]);
 
   const getOccupancyColor = (available: number, total: number) => {
     const rate = (available / total) * 100;
