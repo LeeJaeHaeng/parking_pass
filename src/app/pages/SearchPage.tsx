@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Search, MapPin, SlidersHorizontal, X } from 'lucide-react';
-import { mockParkingLots } from '../data/mockData';
+import { mockParkingLots, violationHotspotsWithCoords } from '../data/mockData';
 import { KakaoMap } from '../components/KakaoMap';
 import { Button as UIButton } from '../components/ui/button';
 import { Button } from '../components/ui/button';
@@ -28,6 +28,7 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
   const [sortBy, setSortBy] = useState<'distance' | 'availability' | 'price'>('distance');
   const [maxDistance, setMaxDistance] = useState([2]);
   const [parkingType, setParkingType] = useState<'all' | 'public' | 'private'>('all');
+  const [showHotspots, setShowHotspots] = useState(false);
 
   const recentSearches = ['불당동', '신부동', '터미널', '갤러리아'];
 
@@ -174,11 +175,22 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
         <div className="max-w-lg mx-auto p-4 space-y-2">
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>검색 결과 지도</span>
-            <UIButton variant="outline" size="sm" onClick={() => setSortBy('distance')}>
-              거리 우선 정렬
-            </UIButton>
+            <div className="flex gap-2">
+              <UIButton variant="outline" size="sm" onClick={() => setSortBy('distance')}>
+                거리 우선 정렬
+              </UIButton>
+              <UIButton variant={showHotspots ? 'default' : 'outline'} size="sm" onClick={() => setShowHotspots((v) => !v)}>
+                핫스팟 보기
+              </UIButton>
+            </div>
           </div>
-          <KakaoMap parkingLots={getFilteredAndSortedLots()} height="12rem" onMarkerClick={onParkingSelect} />
+          <KakaoMap
+            parkingLots={getFilteredAndSortedLots()}
+            height="12rem"
+            onMarkerClick={onParkingSelect}
+            hotspots={violationHotspotsWithCoords}
+            showHotspots={showHotspots}
+          />
         </div>
       </div>
 

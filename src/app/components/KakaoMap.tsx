@@ -12,6 +12,8 @@ type KakaoMapProps = {
   parkingLots: ParkingLot[];
   height?: string;
   onMarkerClick?: (id: number) => void;
+  hotspots?: { place: string; count: number; lat?: number; lon?: number }[];
+  showHotspots?: boolean;
 };
 
 const kakaoLoader = (() => {
@@ -44,7 +46,7 @@ const kakaoLoader = (() => {
   };
 })();
 
-export function KakaoMap({ parkingLots, height = '16rem', onMarkerClick }: KakaoMapProps) {
+export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, height = '16rem', onMarkerClick }: KakaoMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -82,6 +84,20 @@ export function KakaoMap({ parkingLots, height = '16rem', onMarkerClick }: Kakao
             }
             markers.push(marker);
           });
+
+        if (showHotspots) {
+          hotspots
+            .filter((h) => h.lat && h.lon)
+            .forEach((hotspot) => {
+              const position = new window.kakao.maps.LatLng(hotspot.lat, hotspot.lon);
+              const marker = new window.kakao.maps.Marker({
+                position,
+                map,
+                title: `${hotspot.place} (${hotspot.count})`,
+              });
+              markers.push(marker);
+            });
+        }
 
         setStatus('ready');
         return () => {

@@ -185,3 +185,12 @@ export const mockVehicle: Vehicle = {
 };
 
 export const violationHotspots = violationSummary;
+
+// 임시 지오코딩 없는 핫스팟 좌표: 주차장/기준점 근처로 매핑
+export const violationHotspotsWithCoords = (violationSummary.hotspots || []).slice(0, 20).map((h: any, idx: number) => ({
+  place: h.place,
+  count: h.count,
+  lat: center.lat + (Math.random() * 0.02 - 0.01),
+  lon: center.lon + (Math.random() * 0.02 - 0.01),
+  id: idx + 1,
+}));
