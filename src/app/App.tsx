@@ -14,19 +14,28 @@ type Page = 'home' | 'search' | 'detail' | 'my-parking' | 'payment' | 'my-page' 
 type User = {
   id: string;
   name: string;
+  email?: string;
+  token?: string;
 } | null;
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedParkingId, setSelectedParkingId] = useState<number | null>(null);
-  const [user, setUser] = useState<User>(null);
+  const [user, setUser] = useState<User>(() => {
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('authUser') : null;
+    return stored ? JSON.parse(stored) : null;
+  });
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
+    if (loggedInUser) {
+      window.localStorage.setItem('authUser', JSON.stringify(loggedInUser));
+    }
   };
 
   const handleLogout = () => {
     setUser(null);
+    window.localStorage.removeItem('authUser');
     setCurrentPage('home');
   };
 

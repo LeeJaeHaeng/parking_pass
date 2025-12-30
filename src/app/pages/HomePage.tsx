@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, TrendingUp } from 'lucide-react';
+import { MapPin, Navigation, Clock, TrendingUp, LocateFixed } from 'lucide-react';
 import { api } from '../api';
 import { ParkingLot } from '../types';
 import { mockParkingLots } from '../data/mockData';
@@ -13,16 +13,25 @@ interface HomePageProps {
   onSearchClick: () => void;
 }
 
+type UserLocation = { lat: number; lon: number } | null;
+
 export default function HomePage({ onParkingSelect, onSearchClick }: HomePageProps) {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'available' | 'nearby'>('all');
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>(mockParkingLots);
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<UserLocation>(null);
+  const [locError, setLocError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchParkingLots = async () => {
       try {
         const data = await api.getParkingLots();
-        setParkingLots(data);
+        // distance가 없는 경우 0 처리
+        const normalized = data.map((lot) => ({
+          ...lot,
+          distance: lot.distance ?? 0,
+        }));
+        setParkingLots(normalized);
       } catch (error) {
         console.error('Failed to fetch parking lots:', error);
         setParkingLots(mockParkingLots);
@@ -39,9 +48,34 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
     if (selectedFilter === 'available') {
       filtered = filtered.filter(lot => lot.availableSpaces > 10);
     } else if (selectedFilter === 'nearby') {
-      filtered = filtered.filter(lot => lot.distance < 1);
+      if (userLocation) {
+        filtered = filtered.filter(lot => lot.distance < 1.5);
+      } else {
+        filtered = filtered.filter(lot => lot.distance < 1);
+      }
     }
     
+    // 현 위치가 있으면 실제 거리 순으로, 없으면 distance 필드 순
+    if (userLocation) {
+      const toRadians = (deg: number) => (deg * Math.PI) / 180;
+      const EARTH_RADIUS_KM = 6371;
+      const calcDistance = (lat: number, lon: number) => {
+        const dLat = toRadians(lat - userLocation.lat);
+        const dLon = toRadians(lon - userLocation.lon);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRadians(userLocation.lat)) *
+            Math.cos(toRadians(lat)) *
+            Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
+      };
+      filtered = filtered.map((lot) => ({
+        ...lot,
+        distance: calcDistance(lot.latitude, lot.longitude),
+      }));
+    }
+
     return filtered.sort((a, b) => a.distance - b.distance);
   };
 
@@ -92,6 +126,38 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>주변 주차장 위치</span>
             <span className="text-blue-600">총 {parkingLots.length}곳</span>
+          </div>
+          <div className="flex gap-2 text-xs text-gray-500 items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  setLocError('브라우저에서 위치를 지원하지 않습니다.');
+                  return;
+                }
+                setLocError(null);
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                  },
+                  (err) => {
+                    setLocError(err.message || '위치 정보를 가져올 수 없습니다.');
+                  },
+                  { enableHighAccuracy: false, timeout: 5000 }
+                );
+              }}
+              className="h-8"
+            >
+              <LocateFixed className="w-3 h-3 mr-1" />
+              현 위치 반영
+            </Button>
+            {userLocation && (
+              <span className="text-blue-600">위치 갱신됨</span>
+            )}
+            {locError && (
+              <span className="text-red-500">{locError}</span>
+            )}
           </div>
           <KakaoMap
             parkingLots={parkingLots}

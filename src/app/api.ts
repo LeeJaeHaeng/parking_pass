@@ -44,8 +44,25 @@ const normalizeParkingLot = (raw: any): ParkingLot => ({
     : undefined,
 });
 
+const getStoredToken = () => {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const stored = window.localStorage.getItem('authUser');
+    if (!stored) return undefined;
+    const parsed = JSON.parse(stored);
+    return parsed?.token as string | undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 async function safeFetch(url: string, options?: RequestInit) {
-  const response = await fetch(url, options);
+  const token = getStoredToken();
+  const headers = {
+    ...(options?.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const response = await fetch(url, { ...options, headers });
   if (!response.ok) {
     throw new Error(response.statusText || 'Request failed');
   }
@@ -132,3 +149,7 @@ export const api = {
     return res.json();
   },
 };
+
+export function authHeaders(token?: string) {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
