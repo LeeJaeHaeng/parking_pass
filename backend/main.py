@@ -200,10 +200,19 @@ def generate_prediction(parking_id: int, hours_ahead: int = 24):
     for i in range(hours_ahead):
         time_str = (datetime.now() + timedelta(hours=i+1)).strftime('%H:00')
         pred = forecast.iloc[len(df) + i]
+        occupancy = float(pred['yhat'])
+        band = float(pred['yhat_upper'] - pred['yhat_lower'])
+        occupancy = max(0.0, min(100.0, occupancy))
+
+        # band(예측 구간 폭)에 따라 60~95% 사이로 신뢰도 계산 (폭이 작을수록 95% 근접)
+        # band가 10 이하이면 95%, band가 60 이상이면 60%까지 내려감
+        conf = 95.0 - min(35.0, max(0.0, (band - 10) * (35.0 / 50.0)))
+        confidence = round(conf, 1)
+        confidence = max(60.0, min(95.0, confidence))
         predictions.append({
             "time": time_str,
-            "occupancy_rate": round(pred['yhat'], 1),
-            "confidence": round((1 - pred['yhat_upper'] + pred['yhat_lower']) / 2 * 100, 1)
+            "occupancy_rate": round(occupancy, 1),
+            "confidence": round(confidence, 1)
         })
 
     return predictions
