@@ -27,8 +27,8 @@ def health_check():
     return {
         "status": "ok", 
         "environment": os.getenv("RENDER", "local"),
-        "version": "1.0.4",
-        "timestamp": "2026-01-03 00:20"
+        "version": "1.0.5",
+        "timestamp": "2026-01-03 00:33"
     }
 
 @app.get("/db-debug")
