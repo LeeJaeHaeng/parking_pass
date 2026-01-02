@@ -69,11 +69,18 @@ if DATABASE_URL.startswith("postgres://"):
 # 클라우드 DB 연결 안정성을 위한 설정
 engine_args = {}
 if DATABASE_URL.startswith("postgresql"):
+    # SSL 설정을 명시적으로 추가하여 연결 오류 방지
+    if "?" not in DATABASE_URL:
+        DATABASE_URL += "?sslmode=require"
+    elif "sslmode" not in DATABASE_URL:
+        DATABASE_URL += "&sslmode=require"
+        
     engine_args = {
-        "pool_size": 5,
-        "max_overflow": 10,
+        "pool_size": 10,
+        "max_overflow": 20,
         "pool_timeout": 30,
         "pool_recycle": 1800,
+        "pool_pre_ping": True, # 연결 끊김 감지 시 재연결
     }
 
 engine = create_engine(DATABASE_URL, echo=False, future=True, **engine_args)
