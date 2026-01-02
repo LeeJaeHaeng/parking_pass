@@ -22,6 +22,10 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 app = FastAPI(title="Cheonan AI Parking Pass API")
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "environment": os.getenv("RENDER", "local")}
+
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
@@ -673,7 +677,14 @@ def login_user(payload: UserLogin, db: Session = Depends(get_db)):
 
 @app.on_event("startup")
 def on_startup():
-    Base.metadata.create_all(bind=engine)
+    try:
+        print(f"Connecting to database: {DATABASE_URL[:20]}...")
+        Base.metadata.create_all(bind=engine)
+        print("Database connection & migration successful.")
+    except Exception as e:
+        print(f"Database connection failed during startup: {e}")
+        print("The server will continue to run using local data files if available.")
+        
     load_parking_lots()
     load_violation_patterns()
 
