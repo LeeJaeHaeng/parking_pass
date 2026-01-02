@@ -24,34 +24,32 @@ app = FastAPI(title="Cheonan AI Parking Pass API")
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "environment": os.getenv("RENDER", "local")}
+    return {
+        "status": "ok", 
+        "environment": os.getenv("RENDER", "local"),
+        "version": "1.0.3",
+        "timestamp": "2026-01-02 23:55"
+    }
 
 @app.get("/db-debug")
 def db_debug():
+    debug_info = {
+        "database_url_configured": DATABASE_URL is not None,
+        "database_type": "postgresql" if DATABASE_URL.startswith("postgresql") else "sqlite",
+        "url_preview": DATABASE_URL.split("@")[-1] if "@" in DATABASE_URL else "no-credentials-found"
+    }
     try:
-        # DATABASE_URL에서 비밀번호만 마스킹하여 출력
-        safe_url = DATABASE_URL
-        if "@" in safe_url:
-            prefix, rest = safe_url.split("@", 1)
-            if ":" in prefix:
-                proto_user, pw = prefix.split(":", 2)[0:2], prefix.split(":", 2)[-1]
-                safe_url = f"{prefix.split(':')[0]}:***@{rest}"
-        
         # 실제 연결 테스트
         with engine.connect() as conn:
             from sqlalchemy import text
-            result = conn.execute(text("SELECT now()")).scalar()
-            return {
-                "status": "connected",
-                "db_time": str(result),
-                "url_preview": safe_url
-            }
+            result = conn.execute(text("SELECT 1")).scalar()
+            debug_info["connection_test"] = "success"
+            debug_info["test_result"] = result
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-            "url_preview": safe_url if 'safe_url' in locals() else "unknown"
-        }
+        debug_info["connection_test"] = "failed"
+        debug_info["error"] = str(e)
+    
+    return debug_info
 
 # CORS 설정
 app.add_middleware(
