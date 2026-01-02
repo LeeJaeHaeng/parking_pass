@@ -60,7 +60,8 @@ async def weather_debug():
     api_key = os.getenv("VITE_KMA_API_KEY") or os.getenv("KMA_API_KEY")
     lat, lon = 36.815, 127.113
     nx, ny = map_to_grid(lat, lon)
-    base_date, base_time = get_vilage_fcst_base_time(datetime.now())
+    kst_now = get_kst_now()
+    base_date, base_time = get_vilage_fcst_base_time(kst_now)
     
     url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
     params = {
@@ -324,6 +325,10 @@ def extract_dong_from_address(address: str) -> str:
 # ===== 날씨 및 휴일 API 유틸리티 =====
 
 # 기상청 격자 변환 (위경도 -> X,Y)
+def get_kst_now():
+    """서버 시간(UTC)을 한국 시간(KST)으로 변환"""
+    return datetime.utcnow() + timedelta(hours=9)
+
 def map_to_grid(lat, lon, code=0):
     NX = 149            # X축 격자점 수
     NY = 253            # Y축 격자점 수
@@ -390,8 +395,12 @@ async def fetch_real_weather(lat: float, lon: float):
         return None
     
     nx, ny = map_to_grid(lat, lon)
-    base_date, base_time = get_vilage_fcst_base_time(datetime.now())
+    # 한국 시간 기준 처리 필수
+    kst_now = get_kst_now()
+    base_date, base_time = get_vilage_fcst_base_time(kst_now)
     
+    # 공공데이터포털 특유의 인증키 문제를 방지하기 위해 URL에 직접 포함하는 방식 권장
+    # 단, requests lib의 자동 인코딩을 고려해 Decoding 키를 사용하는 것이 일반적
     url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
     params = {
         "serviceKey": api_key,
@@ -455,8 +464,9 @@ async def fetch_real_weather(lat: float, lon: float):
 
 async def check_is_holiday(date_str: str =  None):
     """특일(공휴일) 정보 조회"""
+    kst_now = get_kst_now()
     if not date_str:
-        date_str = datetime.now().strftime("%Y%m%d")
+        date_str = kst_now.strftime("%Y%m%d")
     
     api_key = os.getenv("VITE_HOLIDAY_API_KEY") or os.getenv("HOLIDAY_API_KEY")
     if not api_key or api_key == "your_holiday_key":
@@ -520,18 +530,28 @@ class PredictionEngine:
 
     async def update_extras(self):
         """날씨 및 휴일 정보 업데이트"""
-        now = datetime.now()
-        # 10분에 한번 날씨 업데이트
-        if not self.cached_weather or not self.weather_updated or (now - self.weather_updated).total_seconds() > 600:
-            # 천안시청 기준 좌표
+        now = get_kst_now()
+        # 30분에 한번 날씨 업데이트 (API 호출 횟수 절약 및 캐시 활용)
+        if not self.cached_weather or not self.weather_updated or (now - self.weather_updated).total_seconds() > 1800:
             lat, lon = 36.815, 127.113
             w_data = await fetch_real_weather(lat, lon)
             if w_data:
+                # weather_score 계산 (예측 모델용)
+                temp = w_data.get('temperature', 18)
+                cond = w_data.get('condition', 'sunny')
+                
+                # 비/눈 올 때 주차 수요 변화 가중치
+                w_score = 0
+                if cond == 'rainy': w_score = 0.2
+                elif cond == 'snowy': w_score = 0.3
+                
+                w_data['weather_score'] = w_score
                 self.cached_weather = w_data
                 self.weather_updated = now
             else: 
-                # 실패시 기본값 (흐림)
-                self.cached_weather = {"temperature": 18, "condition": "cloudy", "weather_score": 0}
+                # 실패 시 마지막 데이터 유지 시도, 아예 없으면 기본값(단, 영하임을 표시하기 위해 -10도 등으로 변경)
+                if not self.cached_weather:
+                    self.cached_weather = {"temperature": -10, "condition": "cloudy", "weather_score": 0}
         
         # 휴일 여부 (하루 한번만 체크해도 됨)
         if not self.initialized_extras:
