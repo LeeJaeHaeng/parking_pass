@@ -25,16 +25,25 @@ app = FastAPI(title="Cheonan AI Parking Pass API")
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:5173",
+        "https://cheonan-parking-ai.web.app",
+        "https://cheonan-parking-ai.firebaseapp.com"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ===== 경로 설정 =====
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_DIR = Path(__file__).resolve().parent
-PARKING_JSON = PROJECT_ROOT / "src" / "app" / "data" / "parkingLots.json"
+PROJECT_ROOT = BACKEND_DIR.parent
+
+# 도커 환경(배포용)과 로컬 환경(개발용) 모두 대응
+PARKING_JSON = BACKEND_DIR / "parkingLots.json"
+if not PARKING_JSON.exists():
+    PARKING_JSON = PROJECT_ROOT / "src" / "app" / "data" / "parkingLots.json"
+
 VIOLATION_PATTERNS_JSON = BACKEND_DIR / "violation_patterns.json"
 
 # ===== 환경 변수 로드 =====
@@ -52,7 +61,22 @@ load_env()
 
 # ===== 데이터베이스 설정 =====
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
-engine = create_engine(DATABASE_URL, echo=False, future=True)
+
+# SQLAlchemy 1.4+ 에서는 postgres:// 대신 postgresql:// 를 사용해야 함
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# 클라우드 DB 연결 안정성을 위한 설정
+engine_args = {}
+if DATABASE_URL.startswith("postgresql"):
+    engine_args = {
+        "pool_size": 5,
+        "max_overflow": 10,
+        "pool_timeout": 30,
+        "pool_recycle": 1800,
+    }
+
+engine = create_engine(DATABASE_URL, echo=False, future=True, **engine_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
