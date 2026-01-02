@@ -36,7 +36,11 @@ def db_debug():
     debug_info = {
         "database_url_configured": DATABASE_URL is not None,
         "database_type": "postgresql" if DATABASE_URL.startswith("postgresql") else "sqlite",
-        "url_preview": DATABASE_URL.split("@")[-1] if "@" in DATABASE_URL else "no-credentials-found"
+        "url_preview": DATABASE_URL.split("@")[-1] if "@" in DATABASE_URL else "no-credentials-found",
+        "keys_loaded": {
+            "KMA": os.getenv("VITE_KMA_API_KEY") is not None or os.getenv("KMA_API_KEY") is not None,
+            "HOLIDAY": os.getenv("VITE_HOLIDAY_API_KEY") is not None or os.getenv("HOLIDAY_API_KEY") is not None
+        }
     }
     try:
         # 실제 연결 테스트
@@ -50,6 +54,38 @@ def db_debug():
         debug_info["error"] = str(e)
     
     return debug_info
+
+@app.get("/weather-debug")
+async def weather_debug():
+    api_key = os.getenv("VITE_KMA_API_KEY") or os.getenv("KMA_API_KEY")
+    lat, lon = 36.815, 127.113
+    nx, ny = map_to_grid(lat, lon)
+    base_date, base_time = get_vilage_fcst_base_time(datetime.now())
+    
+    url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
+    params = {
+        "serviceKey": api_key,
+        "pageNo": "1",
+        "numOfRows": "100",
+        "dataType": "JSON",
+        "base_date": base_date,
+        "base_time": base_time,
+        "nx": nx,
+        "ny": ny
+    }
+    
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        return {
+            "url": url.replace(api_key, "HIDDEN") if api_key else url,
+            "status_code": response.status_code,
+            "response_text": response.text[:500],
+            "params": {k: v for k, v in params.items() if k != "serviceKey"},
+            "api_key_status": "present" if api_key else "missing",
+            "api_key_preview": api_key[:5] + "..." if api_key else "none"
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 # CORS 설정
 app.add_middleware(

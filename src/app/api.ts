@@ -147,12 +147,19 @@ async function safeFetch(url: string, options?: RequestInit) {
     const response = await fetch(url, { ...options, headers, signal: controller.signal });
     clearTimeout(timeoutId);
     if (!response.ok) {
-      throw new Error(response.statusText || 'Request failed');
+      let errorDetail = '';
+      try {
+        const errData = await response.json();
+        errorDetail = errData.detail || errData.message || '';
+      } catch (e) { /* ignore */ }
+      
+      const msg = errorDetail ? `서버 오류: ${errorDetail}` : (response.statusText || '요청 실패');
+      throw new Error(msg);
     }
     return response.json();
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      throw new Error('서버 연결 실패 (시간 초과). PC 방화벽이 차단했을 수 있습니다.');
+      throw new Error('서버 연결 실패 (시간 초과).');
     }
     throw error;
   }
