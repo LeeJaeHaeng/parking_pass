@@ -54,25 +54,46 @@ const calcDistanceKm = (lat: number, lon: number) => {
 };
 
 const normalizeParkingLot = (raw: any): ParkingLot => {
+  if (!raw) {
+    return {
+      id: '',
+      name: '정보 없음',
+      address: '',
+      totalSpaces: 0,
+      availableSpaces: 0,
+      distance: 0,
+      fee: { type: '정보 없음', basic: 0, basicTime: 0, additional: 0, additionalTime: 0, daily: 0, monthly: 0 },
+      operatingHours: '정보 없음',
+      latitude: 0,
+      longitude: 0,
+      type: 'private',
+      facilities: []
+    };
+  }
+
   const lat = Number(raw.latitude) || 0;
   const lon = Number(raw.longitude) || 0;
   
   return {
     id: raw.id?.toString() || '',
     externalId: raw.externalId,
-    name: raw.name || '',
+    name: raw.name || '이름 없음',
     address: raw.address || '',
-    totalSpaces: raw.totalSpaces ?? 0,
-    availableSpaces: raw.availableSpaces ?? Math.max(1, Math.round((raw.totalSpaces ?? 0) * 0.35)),
-    distance: raw.distance ?? calcDistanceKm(lat, lon),
+    totalSpaces: Number(raw.totalSpaces) || 0,
+    availableSpaces: (raw.availableSpaces !== null && raw.availableSpaces !== undefined) 
+      ? Number(raw.availableSpaces) 
+      : Math.max(0, Math.round((Number(raw.totalSpaces) || 0) * 0.35)),
+    distance: (raw.distance !== null && raw.distance !== undefined) 
+      ? Number(raw.distance) 
+      : calcDistanceKm(lat, lon),
     fee: {
-      type: raw.fee?.type || '무료',
-      basic: raw.fee?.basic ?? 0,
-      basicTime: raw.fee?.basicTime ?? 30,
-      additional: raw.fee?.additional ?? 0,
-      additionalTime: raw.fee?.additionalTime ?? 10,
-      daily: raw.fee?.daily ?? 0,
-      monthly: raw.fee?.monthly ?? 0,
+      type: raw.fee?.type || '정보 없음',
+      basic: Number(raw.fee?.basic) || 0,
+      basicTime: Number(raw.fee?.basicTime) || 30,
+      additional: Number(raw.fee?.additional) || 0,
+      additionalTime: Number(raw.fee?.additionalTime) || 10,
+      daily: Number(raw.fee?.daily) || 0,
+      monthly: Number(raw.fee?.monthly) || 0,
     },
     operatingHours: raw.operatingHours || '정보 없음',
     operatingDays: raw.operatingDays || '',
@@ -85,13 +106,13 @@ const normalizeParkingLot = (raw: any): ParkingLot => {
     managingOrg: raw.managingOrg,
     phone: raw.phone,
     paymentMethods: raw.paymentMethods,
-    facilities: raw.facilities || [],
+    facilities: Array.isArray(raw.facilities) ? raw.facilities : [],
     dataDate: raw.dataDate,
-    prediction: raw.prediction
+    prediction: Array.isArray(raw.prediction)
       ? raw.prediction.map((item: any) => ({
-          time: item.time,
-          occupancyRate: item.occupancy_rate ?? item.occupancyRate ?? 0,
-          confidence: item.confidence ?? 0,
+          time: item.time || '',
+          occupancyRate: Number(item.occupancy_rate ?? item.occupancyRate) || 0,
+          confidence: Number(item.confidence) || 0,
           factors: item.factors,
         }))
       : undefined,
@@ -113,12 +134,14 @@ const getStoredToken = () => {
 async function safeFetch(url: string, options?: RequestInit) {
   const token = getStoredToken();
   const headers = {
+    'Content-Type': 'application/json',
+    'bypass-tunnel-reminder': 'true',
     ...(options?.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃 (모바일 및 날씨 API 지연 고려)
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
     const response = await fetch(url, { ...options, headers, signal: controller.signal });
@@ -161,6 +184,7 @@ export const api = {
     
     try {
       const data = await safeFetch(`${API_BASE_URL}/parking-lots/${id}`);
+      if (!data) throw new Error('데이터가 없습니다.');
       return normalizeParkingLot(data);
     } catch (error) {
       console.warn('Falling back to local parkingLotsSource:', error);
@@ -214,29 +238,17 @@ export const api = {
   },
 
   async register(payload: AuthPayload): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    return safeFetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || '회원가입 실패');
-    }
-    return res.json();
   },
 
   async login(payload: AuthPayload): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    return safeFetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || '로그인 실패');
-    }
-    return res.json();
   },
 
   async createPayment(payload: PaymentPayload): Promise<PaymentRecord> {

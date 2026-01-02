@@ -524,9 +524,16 @@ class PredictionEngine:
             holiday_w * self.WEIGHTS['holiday']
         )
         
-        base_occupancy = 35
-        occupancy = base_occupancy + (weighted_score * 60)
-        occupancy = max(10, min(98, occupancy))
+        # 현실적인 점유율 분포를 위한 보정 (기본 15% ~ 최대 95%)
+        base_occupancy = 15.0
+        occupancy = base_occupancy + (weighted_score * 80)
+        
+        # 요일/시간대에 따른 추가 무작위성 (신뢰도에 영향 없는 미세 변동)
+        import random
+        random.seed(parking_id + str(hour)) # 재현 가능한 변동
+        occupancy += random.uniform(-5, 5)
+        
+        occupancy = max(5, min(95, occupancy))
         
         confidence = self._calculate_confidence(dong, hour)
         

@@ -24,12 +24,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     try {
       if (mode === 'register') {
         const res = await api.register({ email, password, name });
+        if (!res || !res.access_token) throw new Error('회원가입 응답이 올바르지 않습니다.');
         onLogin({ id: String(res.user_id), name: res.name || email, email: res.email, token: res.access_token });
       } else {
         const res = await api.login({ email, password });
+        if (!res || !res.access_token) throw new Error('로그인 응답이 올바르지 않습니다.');
         onLogin({ id: String(res.user_id), name: res.name || email, email: res.email, token: res.access_token });
       }
     } catch (err: any) {
+      console.error('Auth error:', err);
       setError(err?.message || '요청에 실패했습니다');
     } finally {
       setIsLoading(false);

@@ -22,8 +22,14 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedParkingId, setSelectedParkingId] = useState<string | null>(null);
   const [user, setUser] = useState<User>(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('authUser') : null;
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = typeof window !== 'undefined' ? window.localStorage.getItem('authUser') : null;
+      if (!stored || stored === 'undefined' || stored === 'null') return null;
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error('Failed to parse authUser from localStorage:', e);
+      return null;
+    }
   });
 
   // 페이지 전환 시 항상 최상단으로 스크롤

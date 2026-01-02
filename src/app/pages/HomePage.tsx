@@ -47,22 +47,38 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
 
   // 초기 로딩 시 사용자 위치 자동 확보
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-          setLocError(null);
-        },
-        (err) => {
-          console.warn('위치 정보를 가져올 수 없어 전체 목록을 표시합니다.', err);
-          setLocError('위치 권한이 필요합니다.');
-          setSelectedFilter('all'); // 위치 실패 시 전체 보기로 변경
-        },
-        { enableHighAccuracy: false, timeout: 5000 }
-      );
-    } else {
-      setSelectedFilter('all');
-    }
+    const requestLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+            setLocError(null);
+          },
+          (err) => {
+            let msg = '위치 정보를 가져올 수 없습니다.';
+            switch(err.code) {
+              case err.PERMISSION_DENIED:
+                msg = '위치 권한이 거부되었습니다. (보안 연결(HTTPS)이 아니거나 설정에서 차단됨)';
+                break;
+              case err.POSITION_UNAVAILABLE:
+                msg = '위치 정보를 사용할 수 없습니다.';
+                break;
+              case err.TIMEOUT:
+                msg = '위치 정보 획득 시간이 초과되었습니다.';
+                break;
+            }
+            console.warn(msg, err);
+            setLocError(msg);
+            setSelectedFilter('all');
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } else {
+        setLocError('브라우저가 위치 정보를 지원하지 않습니다.');
+        setSelectedFilter('all');
+      }
+    };
+    requestLocation();
   }, []);
 
   const normalizeLotFromJson = (lot: any): ParkingLot => ({
@@ -71,7 +87,9 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
     name: lot.name,
     address: lot.address,
     totalSpaces: Number(lot.totalSpaces) || 0,
-    availableSpaces: Number(lot.availableSpaces) || 0,
+    availableSpaces: (lot.availableSpaces !== null && lot.availableSpaces !== undefined) 
+      ? Number(lot.availableSpaces) 
+      : Math.max(0, Math.round((Number(lot.totalSpaces) || 0) * 0.35)),
     distance: Number(lot.distance) || 0,
     fee: { 
       type: lot.fee?.type || '무료',
@@ -135,12 +153,14 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
     // 3. 전체 보기 시 사용자 지정 정렬
     return processed.sort((a, b) => {
       if (sortBy === 'congestion') {
-        const rateA = (a.availableSpaces ?? 0) / (a.totalSpaces || 1);
-        const rateB = (b.availableSpaces ?? 0) / (b.totalSpaces || 1);
+        const totalA = Math.max(1, a.totalSpaces || 0);
+        const totalB = Math.max(1, b.totalSpaces || 0);
+        const rateA = (a.availableSpaces ?? 0) / totalA;
+        const rateB = (b.availableSpaces ?? 0) / totalB;
         return rateB - rateA; // 가용률 높은 순
       }
       if (sortBy === 'price') {
-        return (a.fee.basic ?? 0) - (b.fee.basic ?? 0); // 요금 낮은 순
+        return (a.fee?.basic ?? 0) - (b.fee?.basic ?? 0); // 요금 낮은 순
       }
       if (sortBy === 'distance') {
         return (a.distance ?? 0) - (b.distance ?? 0);
@@ -150,14 +170,16 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
   };
 
   const getOccupancyColor = (available: number, total: number) => {
-    const rate = (available / total) * 100;
+    const totalVal = Math.max(1, total);
+    const rate = (available / totalVal) * 100;
     if (rate > 30) return 'text-green-600 bg-green-50';
     if (rate > 10) return 'text-yellow-600 bg-yellow-50';
     return 'text-red-600 bg-red-50';
   };
 
   const getOccupancyStatus = (available: number, total: number) => {
-    const rate = (available / total) * 100;
+    const totalVal = Math.max(1, total);
+    const rate = (available / totalVal) * 100;
     if (rate > 30) return '여유';
     if (rate > 10) return '보통';
     return '혼잡';
@@ -169,7 +191,10 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl">천안 AI 파킹 패스</h1>
+            <div className="flex items-center gap-2">
+              <img src="/logo.jpg" alt="Cheonan Logo" className="h-8 w-auto object-contain" />
+              <h1 className="text-xl font-bold tracking-tight">AI 파킹 패스</h1>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -202,21 +227,18 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
               variant="outline"
               size="sm"
               onClick={() => {
-                if (!navigator.geolocation) {
-                  setLocError('브라우저에서 위치를 지원하지 않습니다.');
-                  return;
-                }
-                setLocError(null);
+                setLocError('위치 정보를 요청 중입니다...');
                 navigator.geolocation.getCurrentPosition(
                   (pos) => {
                     setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
                     setSelectedFilter('nearby');
                     setSortBy('distance');
+                    setLocError(null);
                   },
                   (err) => {
-                    setLocError(err.message || '위치 정보를 가져올 수 없습니다.');
+                    setLocError('권한 거부 또는 획득 실패. (HTTP 접속 시 제한될 수 있음)');
                   },
-                  { enableHighAccuracy: false, timeout: 5000 }
+                  { enableHighAccuracy: true, timeout: 10000 }
                 );
               }}
               className="h-8"
@@ -225,10 +247,15 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
               현 위치 반영
             </Button>
             {userLocation && (
-              <span className="text-blue-600">위치 갱신됨</span>
+              <span className="text-blue-600 font-medium">위치 갱신됨</span>
             )}
             {locError && (
-              <span className="text-red-500">{locError}</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-red-500 font-medium">{locError}</span>
+                {locError.includes('HTTPS') && (
+                  <span className="text-[10px] text-gray-400 underline decoration-dotted">테스트 팁: Chrome 설정에서 내부 IP 허용 필요</span>
+                )}
+              </div>
             )}
           </div>
           <KakaoMap
