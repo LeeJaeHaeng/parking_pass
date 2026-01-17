@@ -47,14 +47,15 @@
 
 ---
 
-## � 배포 정보
+## 🚀 배포 정보
 
-- **Frontend & Backend (Render)**: [Render Dashboard](https://dashboard.render.com/web/srv-d5bnijer433s73934130)
+- **Frontend (Firebase Hosting)**: [https://cheonan-parking-ai.web.app](https://cheonan-parking-ai.web.app)
+- **Backend (Render)**: [Render Dashboard](https://dashboard.render.com/web/srv-d5bnijer433s73934130)
 - **Database (Supabase)**: [Supabase Dashboard](https://supabase.com/dashboard/project/vjjgnlkzyuadynfrwajl)
 
 ---
 
-## �🛠️ 기술 스택 (Tech Stack)
+## 🛠️ 기술 스택 (Tech Stack)
 
 ### Frontend
 
