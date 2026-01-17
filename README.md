@@ -47,7 +47,14 @@
 
 ---
 
-## 🛠️ 기술 스택 (Tech Stack)
+## � 배포 정보
+
+- **Frontend & Backend (Render)**: [Render Dashboard](https://dashboard.render.com/web/srv-d5bnijer433s73934130)
+- **Database (Supabase)**: [Supabase Dashboard](https://supabase.com/dashboard/project/vjjgnlkzyuadynfrwajl)
+
+---
+
+## �🛠️ 기술 스택 (Tech Stack)
 
 ### Frontend
 
