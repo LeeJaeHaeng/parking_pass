@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, Smartphone, Building2, CheckCircle2, X, Receipt } from 'lucide-react';
+import { CreditCard, Smartphone, Building2, CheckCircle2, X, Receipt, Award, ChevronRight, Check, Sparkles } from 'lucide-react';
 import { mockParkingLots, mockVehicle } from '../data/mockData';
 import { api } from '../api';
 import { Button } from '../components/ui/button';
@@ -7,6 +7,15 @@ import { Card } from '../components/ui/card';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Label } from '../components/ui/label';
 import { Separator } from '../components/ui/separator';
+import { Badge } from '../components/ui/badge';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetDescription
+} from '../components/ui/sheet';
 
 declare global {
   interface Window {
@@ -23,11 +32,25 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCoupon, setSelectedCoupon] = useState<{ id: string, name: string, discount: number, type: string } | null>(null);
+  const [isCouponSheetOpen, setIsCouponSheetOpen] = useState(false);
+
+  const coupons = [
+    { id: 'c1', name: '웰컴 할인 쿠폰', discount: 2000, type: 'fixed' },
+    { id: 'c2', name: '첫 주차 감사 쿠폰', discount: 10, type: 'percent' }
+  ];
 
   const parking = mockParkingLots[0];
   const parkingFee = 5500;
-  const discount = 0;
-  const totalFee = parkingFee - discount;
+  
+  const calculateDiscount = () => {
+    if (!selectedCoupon) return 0;
+    if (selectedCoupon.type === 'fixed') return selectedCoupon.discount;
+    return Math.floor(parkingFee * (selectedCoupon.discount / 100));
+  };
+
+  const discountAmount = calculateDiscount();
+  const totalFee = Math.max(0, parkingFee - discountAmount);
 
   const parkingStartTime = '14:30';
   const parkingEndTime = '16:13';
@@ -155,12 +178,19 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
 
   return (
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="max-w-lg mx-auto p-4 flex items-center justify-between">
-            <h1>결제</h1>
-          <Button variant="ghost" size="sm" onClick={onComplete}>
-            <X className="w-5 h-5" />
+      <div className="bg-white sticky top-0 z-20 px-4 py-4 border-b border-gray-100 backdrop-blur-md bg-white/80">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="premium-gradient p-1.5 rounded-xl shadow-lg shadow-blue-200">
+               <CreditCard className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none">결제하기</h1>
+              <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase mt-0.5">Secure Payment</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" className="rounded-full bg-gray-50 hover:bg-gray-100" onClick={onComplete}>
+            <X className="w-5 h-5 text-gray-400" />
           </Button>
         </div>
       </div>
@@ -172,58 +202,108 @@ export default function PaymentPage({ onComplete }: PaymentPageProps) {
           </div>
         )}
 
-        {/* Parking Summary */}
-        <Card className="p-4">
-          <h3 className="mb-4">주차 정보</h3>
+        {/* Parking Summary Premium Card */}
+        <div className="glass-card p-6 premium-shadow relative overflow-hidden bg-white border border-gray-100 rounded-3xl">
+          <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Parking Details</h3>
           
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">주차장</span>
-              <span>{parking.name}</span>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
+              <span className="text-gray-500 font-bold">주차장</span>
+              <span className="text-gray-900 font-black">{parking.name}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">차량 번호</span>
-              <span>{mockVehicle.licensePlate}</span>
+            <div className="grid grid-cols-2 gap-4">
+               <div className="bg-gray-50 p-4 rounded-2xl">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">차량 번호</p>
+                  <p className="font-black text-gray-800">{mockVehicle.licensePlate}</p>
+               </div>
+               <div className="bg-gray-50 p-4 rounded-2xl">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">주차 시간</p>
+                  <p className="font-black text-gray-800">{parkingDuration}</p>
+               </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">주차 시간</span>
-              <span>{parkingStartTime} ~ {parkingEndTime}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">주차 시간</span>
-              <span>{parkingDuration}</span>
+            <div className="flex justify-between items-center px-2">
+              <span className="text-sm text-gray-400 font-medium">이용 기간</span>
+              <span className="text-sm text-gray-600 font-bold">{parkingStartTime} ~ {parkingEndTime}</span>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Fee Breakdown */}
-        <Card className="p-4">
-          <h3 className="mb-4">요금 상세</h3>
+        {/* Fee Breakdown Premium Card */}
+        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+             <Receipt size={64} className="text-blue-600" />
+          </div>
+          <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Payment Summary</h3>
           
-          <div className="space-y-3 text-sm mb-4">
-            <div className="flex justify-between">
-              <span className="text-gray-600">기본 요금 (30분)</span>
-              <span>{parking.fee.basic.toLocaleString()}원</span>
+          <div className="space-y-4 mb-8">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500 font-medium">기본 주차 요금</span>
+              <span className="text-gray-900 font-bold">{parkingFee.toLocaleString()}원</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">추가 요금 (73분)</span>
-              <span>{(parkingFee - parking.fee.basic).toLocaleString()}원</span>
-            </div>
-            {discount > 0 && (
-              <div className="flex justify-between text-red-600">
-                <span>할인</span>
-                <span>-{discount.toLocaleString()}원</span>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-blue-600 font-bold">쿠폰 할인 {selectedCoupon && `(${selectedCoupon.name})`}</span>
+                <span className="text-blue-600 font-black">-{discountAmount.toLocaleString()}원</span>
               </div>
             )}
+            <Separator className="bg-gray-50" />
+            <div className="flex justify-between items-center py-2">
+              <span className="text-gray-900 font-black text-lg">최종 결제 금액</span>
+              <span className="text-3xl font-black text-blue-600 tracking-tight">{totalFee.toLocaleString()}원</span>
+            </div>
           </div>
 
-          <Separator className="my-4" />
-
-          <div className="flex justify-between items-center">
-            <span>총 결제 금액</span>
-            <span className="text-2xl text-blue-600">{totalFee.toLocaleString()}원</span>
-          </div>
-        </Card>
+          {/* Coupon Selection Interactive */}
+          <Sheet open={isCouponSheetOpen} onOpenChange={setIsCouponSheetOpen}>
+            <SheetTrigger asChild>
+              <button className="w-full flex items-center justify-between p-5 bg-blue-50/50 border border-blue-100 rounded-2xl group active:scale-[0.98] transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                    <Award className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mb-0.5">Discounts Available</p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {selectedCoupon ? selectedCoupon.name : '쿠폰을 선택해주세요'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-all" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-[2.5rem] border-none p-8 h-auto pb-12">
+               <SheetHeader className="mb-8 text-left">
+                  <SheetTitle className="text-2xl font-black">쿠폰 선택</SheetTitle>
+                  <SheetDescription>보유하신 쿠폰 중 하나를 선택해 적용하세요.</SheetDescription>
+               </SheetHeader>
+               <div className="space-y-4">
+                  <div 
+                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer ${!selectedCoupon ? 'border-blue-600 bg-blue-50/50' : 'border-gray-100'}`}
+                    onClick={() => { setSelectedCoupon(null); setIsCouponSheetOpen(false); }}
+                  >
+                     <p className="font-bold text-gray-800">선택 안 함</p>
+                  </div>
+                  {coupons.map(coupon => (
+                    <div 
+                      key={coupon.id}
+                      className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${selectedCoupon?.id === coupon.id ? 'border-blue-600 bg-blue-50/50' : 'border-gray-100 hover:border-gray-200'}`}
+                      onClick={() => { setSelectedCoupon(coupon); setIsCouponSheetOpen(false); }}
+                    >
+                       <div className="flex justify-between items-center relative z-10">
+                          <div>
+                             <p className="font-black text-gray-900 mb-0.5">{coupon.name}</p>
+                             <p className="text-xs text-blue-600 font-bold">
+                               {coupon.type === 'fixed' ? `${coupon.discount.toLocaleString()}원 할인` : `${coupon.discount}% 할인`}
+                             </p>
+                          </div>
+                          {selectedCoupon?.id === coupon.id && <Check className="w-5 h-5 text-blue-600" />}
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </SheetContent>
+          </Sheet>
+        </div>
 
         {/* Payment Method */}
         <Card className="p-4">

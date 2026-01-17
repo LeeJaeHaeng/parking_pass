@@ -17,6 +17,7 @@ type KakaoMapProps = {
   userLocation?: { lat: number; lon: number } | null;
   onAddressFound?: (address: string) => void;
   targetLocation?: { lat: number; lon: number; name: string } | null;
+  shouldCenterUser?: number; // timestamp to trigger centering
 };
 
 const kakaoLoader = (() => {
@@ -49,7 +50,7 @@ const kakaoLoader = (() => {
   };
 })();
 
-export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, height = '16rem', onMarkerClick, userLocation, onAddressFound, targetLocation }: KakaoMapProps) {
+export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, height = '16rem', onMarkerClick, userLocation, onAddressFound, targetLocation, shouldCenterUser }: KakaoMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -139,11 +140,41 @@ export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, hei
     if (userLocation) {
         if (userMarkerRef.current) userMarkerRef.current.setMap(null);
         const locPosition = new window.kakao.maps.LatLng(userLocation.lat, userLocation.lon);
-        userMarkerRef.current = new window.kakao.maps.CustomOverlay({
+        
+        // Red Pin Marker for User
+        const userMarkerImg = new window.kakao.maps.MarkerImage(
+            'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
+            new window.kakao.maps.Size(32, 34),
+            { offset: new window.kakao.maps.Point(13, 34) }
+        );
+
+        userMarkerRef.current = new window.kakao.maps.Marker({
             position: locPosition,
-            content: '<div style="width:14px;height:14px;background:#3b82f6;border:2.5px solid white;border-radius:50%;box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>',
-            map
+            image: userMarkerImg,
+            map,
+            zIndex: 15
         });
+
+        // Add a pulsing effect overlay behind the red pin
+        const pulseContent = document.createElement('div');
+        pulseContent.className = 'user-pulse';
+        pulseContent.style.cssText = 'width:40px;height:40px;background:rgba(239,68,68,0.2);border-radius:50%;animation:pulse 2s infinite;';
+        
+        const pulseOverlay = new window.kakao.maps.CustomOverlay({
+            position: locPosition,
+            content: pulseContent,
+            map,
+            zIndex: 14
+        });
+        
+        // Store both as an array to clean up later if needed, but for now just replacing ref
+        const originalMarker = userMarkerRef.current;
+        userMarkerRef.current = {
+            setMap: (m: any) => {
+                originalMarker.setMap(m);
+                pulseOverlay.setMap(m);
+            }
+        };
 
         // 주소 변환 (디바운싱: 10m 이상 이동 시에만 호출)
         if (onAddressFound) {
@@ -170,23 +201,46 @@ export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, hei
                 targetMarkerRef.current.setMap(null);
             }
         }
+        // 별 모양 마커 제거 (사용자 요청: 불필요한 마커 삭제)
         const locPosition = new window.kakao.maps.LatLng(targetLocation.lat, targetLocation.lon);
-        const imageSrc = "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png"; 
-        const marker = new window.kakao.maps.Marker({
+        /* const marker = new window.kakao.maps.Marker({
             position: locPosition,
             map,
             image: new window.kakao.maps.MarkerImage(imageSrc, new window.kakao.maps.Size(24, 35)),
             zIndex: 10 
-        });
+        }); */
         const overlay = new window.kakao.maps.CustomOverlay({
             position: locPosition,
             content: `<div style="padding:4px 10px;background-color:#2563eb;color:white;font-size:12px;font-weight:bold;border-radius:20px;box-shadow:0 2px 4px rgba(0,0,0,0.2);transform:translateY(-48px);white-space:nowrap;">📍 ${targetLocation.name}</div>`,
             map,
             zIndex: 10
         });
-        targetMarkerRef.current = [marker, overlay];
+        targetMarkerRef.current = [overlay];
     }
-  }, [status, userLocation, targetLocation]); // targetLocation added
+  }, [status, userLocation, targetLocation]); 
+
+  // 4. 강제 센터링 로직
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || status !== 'ready' || !userLocation || !shouldCenterUser) return;
+
+    const locPosition = new window.kakao.maps.LatLng(userLocation.lat, userLocation.lon);
+    map.panTo(locPosition);
+  }, [shouldCenterUser]);
+
+  // 5. 컨테이너 크기 변경 대응 (Sheet 등에서 특히 중요)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || status !== 'ready') return;
+    
+    // 약간의 지연을 주어 애니메이션 등이 끝난 후 처리
+    const timer = setTimeout(() => {
+      map.relayout();
+      map.setCenter(new window.kakao.maps.LatLng(centerCoord.lat, centerCoord.lon));
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [status, centerCoord.lat, centerCoord.lon]);
 
   if (!config.kakaoJsKey) {
     return (
@@ -197,8 +251,8 @@ export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, hei
   }
 
   return (
-    <div className="relative">
-      <div ref={containerRef} className="w-full rounded-lg overflow-hidden" style={{ height }} />
+    <div className="relative" style={{ height }}>
+      <div ref={containerRef} className="w-full h-full rounded-lg overflow-hidden" />
       {status === 'loading' && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-sm text-gray-600">
           지도를 불러오는 중...

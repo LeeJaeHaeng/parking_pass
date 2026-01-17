@@ -1,12 +1,113 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, TrendingUp, LocateFixed, CloudRain, ThermometerSun } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  MapPin, 
+  Navigation, 
+  Clock, 
+  TrendingUp, 
+  LocateFixed, 
+  CloudRain, 
+  ThermometerSun,
+  Sparkles,
+  Info,
+  ChevronRight
+} from 'lucide-react';
 import { api } from '../api';
 import { ParkingLot } from '../types';
 import parkingLotsSource from '../data/parkingLots.json';
+import { ParkingLotCard } from '../components/ParkingLotCard';
 import { KakaoMap } from '../components/KakaoMap';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+
+const EnvironmentTicker = ({ weather }: { weather: any }) => {
+  if (!weather) return null;
+  
+  const items = [
+    { label: '대기질', value: weather.air_quality || '보통', icon: <Sparkles className="w-3 h-3" /> },
+    { label: '미세먼지(PM10)', value: `${weather.pm10 || 0}㎍/㎥`, icon: <CloudRain className="w-3 h-3" /> },
+    { label: '초미세먼지(PM2.5)', value: `${weather.pm25 || 0}㎍/㎥`, icon: <CloudRain className="w-3 h-3" /> },
+    { label: '강수확률', value: `${weather.precipitationProbability || 0}%`, icon: <CloudRain className="w-3 h-3" /> },
+  ];
+
+  return (
+    <div className="bg-blue-600/5 backdrop-blur-sm border-y border-blue-100/50 py-2.5 overflow-hidden sticky bottom-16 z-20">
+      <motion.div 
+        animate={{ x: [0, -1000] }}
+        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        className="flex whitespace-nowrap gap-8 items-center"
+      >
+        {[...items, ...items, ...items].map((item, idx) => (
+          <div key={idx} className="flex items-center gap-2 px-2">
+            <span className="text-blue-500 opacity-60">{item.icon}</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.label}</span>
+            <span className="text-[10px] font-black text-gray-900">{item.value}</span>
+            <span className="mx-2 text-gray-200">|</span>
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
+const AIBriefing = ({ weather, parkingLots }: { weather: any, parkingLots: ParkingLot[] }) => {
+  const [briefing, setBriefing] = useState('데이터 분석 중...');
+
+  useEffect(() => {
+    if (!parkingLots.length) return;
+    
+    const availableTotal = parkingLots.reduce((acc, lot) => acc + (lot.availableSpaces || 0), 0);
+    const avgCongestion = Math.round((1 - (availableTotal / (parkingLots.reduce((acc, lot) => acc + (lot.totalSpaces || 0), 0) || 1))) * 100);
+    
+    let text = `현재 천안시 주요 주차장 가용률은 약 ${100 - avgCongestion}%입니다. `;
+    
+    if (weather) {
+      if (weather.condition === 'rainy' || weather.condition === 'snowy') {
+        text += "날씨의 영향으로 실내 주차장 수요가 급증하고 있습니다. ";
+      } else if (weather.temperature > 28) {
+        text += "폭염으로 인해 그늘이 있는 주차장으로 차량이 몰리고 있습니다. ";
+      }
+    }
+
+    if (avgCongestion > 70) {
+      text += "현재 도심권 주차 혼잡도가 매우 높습니다. 외곽 공영주차장 이용을 추천드려요!";
+    } else {
+      text += "주차 여유가 충분한 편입니다. 목적지 근처 공영주차장을 확인해 보세요.";
+    }
+    
+    setBriefing(text);
+  }, [weather, parkingLots]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl text-white shadow-xl relative overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 p-4 opacity-10">
+        <Sparkles size={80} />
+      </div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-md">
+          <Sparkles className="w-5 h-5" />
+        </div>
+        <h2 className="text-lg font-bold">AI 주차 브리핑</h2>
+      </div>
+      <p className="text-sm leading-relaxed opacity-90 font-light">
+        {briefing}
+      </p>
+      <div className="mt-4 flex gap-2">
+        <Badge className="bg-white/20 hover:bg-white/30 text-white border-0">
+          실시간
+        </Badge>
+        <Badge className="bg-white/20 hover:bg-white/30 text-white border-0">
+          개인화 추천
+        </Badge>
+      </div>
+    </motion.div>
+  );
+};
 
 interface HomePageProps {
   onParkingSelect: (id: string) => void;
@@ -16,7 +117,8 @@ interface HomePageProps {
 type UserLocation = { lat: number; lon: number } | null;
 
 export default function HomePage({ onParkingSelect, onSearchClick }: HomePageProps) {
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'nearby'>('nearby');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'nearby' | 'congestion' | 'price'>('all');
+  const [shouldCenterUser, setShouldCenterUser] = useState<number>(0);
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<UserLocation>(null);
@@ -49,22 +151,31 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
   useEffect(() => {
     const requestLocation = () => {
       if (navigator.geolocation) {
+        console.log('[위치정보] 위치 요청 시작...');
         navigator.geolocation.getCurrentPosition(
           (pos) => {
+            console.log('[위치정보] 성공:', pos.coords.latitude, pos.coords.longitude);
             setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+            setShouldCenterUser(Date.now());
             setLocError(null);
           },
           (err) => {
+            console.error('[위치정보] 오류 발생:', err);
+            console.error('[위치정보] 오류 코드:', err.code);
+            console.error('[위치정보] 오류 메시지:', err.message);
             let msg = '위치 정보를 가져올 수 없습니다.';
             switch(err.code) {
               case err.PERMISSION_DENIED:
-                msg = '위치 권한이 거부되었습니다. (보안 연결(HTTPS)이 아니거나 설정에서 차단됨)';
+                msg = '위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.';
+                console.error('[위치정보] 권한 거부됨');
                 break;
               case err.POSITION_UNAVAILABLE:
                 msg = '위치 정보를 사용할 수 없습니다.';
+                console.error('[위치정보] 위치 사용 불가');
                 break;
               case err.TIMEOUT:
                 msg = '위치 정보 획득 시간이 초과되었습니다.';
+                console.error('[위치정보] 타임아웃');
                 break;
             }
             console.warn(msg, err);
@@ -134,39 +245,44 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
       };
-      processed = processed.map((lot) => ({
-        ...lot,
-        distance: calcDistance(lot.latitude, lot.longitude),
-      }));
+      processed = processed.map((lot) => {
+        const dist = calcDistance(lot.latitude, lot.longitude);
+        
+        // AI 추천 점수 계산 (거리 50%, 가격 20%, 가용률 30%)
+        const distScore = Math.max(0, 100 - (dist * 20)); // 5km 벗어나면 점수 급감
+        const priceScore = lot.fee?.type === '무료' ? 100 : Math.max(0, 100 - (lot.fee?.basic / 100)); // 가격 비쌀수록 감점
+        const availabilityRate = ((lot.availableSpaces ?? 0) / Math.max(1, lot.totalSpaces)) * 100;
+        
+        const ai_score = (distScore * 0.5) + (priceScore * 0.2) + (availabilityRate * 0.3);
+
+        return {
+          ...lot,
+          distance: dist,
+          ai_score
+        };
+      });
     }
 
-    // 2. 필터링 로직
-    if (selectedFilter === 'nearby') {
-      // 가장 가까운 순으로 강제 정렬 후 상위 5개만 추출
-      // 유저 위치가 없으면 distance(0)가 의미 없으므로 기본 정렬 유지될 수 있으나, 
-      // 앱 시작 시 유저 위치를 가져오므로 대부분 정상 동작.
-      // 위치 권한 거부 시에는 distance 0인 상태에서 id순이나 원래 순서대로 5개 나올 것임.
-      processed.sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999));
-      return processed.slice(0, 5);
+    // 3. 필터링 및 정렬 로직 고도화
+    if (selectedFilter === 'congestion') {
+       processed.sort((a, b) => {
+         const totalA = Math.max(1, a.totalSpaces || 0);
+         const totalB = Math.max(1, b.totalSpaces || 0);
+         const rateA = (a.availableSpaces ?? 0) / totalA;
+         const rateB = (b.availableSpaces ?? 0) / totalB;
+         return rateB - rateA;
+       });
+    } else if (selectedFilter === 'price') {
+       processed.sort((a, b) => (a.fee?.basic ?? 0) - (b.fee?.basic ?? 0));
+    } else if (selectedFilter === 'nearby') {
+       processed.sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999));
+       processed = processed.slice(0, 5);
+    } else {
+      // AI 추천 정렬 (종합 점수 기반)
+      processed.sort((a, b) => (b.ai_score || 0) - (a.ai_score || 0));
     }
 
-    // 3. 전체 보기 시 사용자 지정 정렬
-    return processed.sort((a, b) => {
-      if (sortBy === 'congestion') {
-        const totalA = Math.max(1, a.totalSpaces || 0);
-        const totalB = Math.max(1, b.totalSpaces || 0);
-        const rateA = (a.availableSpaces ?? 0) / totalA;
-        const rateB = (b.availableSpaces ?? 0) / totalB;
-        return rateB - rateA; // 가용률 높은 순
-      }
-      if (sortBy === 'price') {
-        return (a.fee?.basic ?? 0) - (b.fee?.basic ?? 0); // 요금 낮은 순
-      }
-      if (sortBy === 'distance') {
-        return (a.distance ?? 0) - (b.distance ?? 0);
-      }
-      return 0;
-    });
+    return processed;
   };
 
   const getOccupancyColor = (available: number, total: number) => {
@@ -186,89 +302,89 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <img src="/logo.jpg" alt="Cheonan Logo" className="h-8 w-auto object-contain" />
-              <h1 className="text-xl font-bold tracking-tight">AI 파킹 패스</h1>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-blue-500"
-              onClick={onSearchClick}
-            >
-              <Navigation className="w-5 h-5" />
-            </Button>
-          </div>
-          
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            <div className="flex-1">
-              <p className="text-sm opacity-90">현재 위치</p>
-              <p className="text-sm">{currentAddress}</p>
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Environment Ticker */}
+      <EnvironmentTicker weather={weather} />
+
+      {/* Premium Header */}
+      <div className="bg-white sticky top-0 z-20 px-4 py-4 border-b border-gray-100 backdrop-blur-md bg-white/80">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.jpg" alt="AI 파킹 패스" className="w-10 h-10 rounded-xl shadow-lg" />
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none">AI 파킹 패스</h1>
+              <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase mt-0.5">천안 스마트시티</p>
             </div>
           </div>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 border-0"
+            onClick={onSearchClick}
+          >
+            <Navigation className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
-      {/* Map */}
-      <div className="p-4 bg-white border-b border-gray-200">
-        <div className="max-w-lg mx-auto space-y-2">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>주변 주차장 위치</span>
-            <span className="text-blue-600">총 {parkingLots.length}곳</span>
-          </div>
-          <div className="flex gap-2 text-xs text-gray-500 items-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setLocError('위치 정보를 요청 중입니다...');
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-                    setSelectedFilter('nearby');
-                    setSortBy('distance');
-                    setLocError(null);
-                  },
-                  (err) => {
-                    setLocError('권한 거부 또는 획득 실패. (HTTP 접속 시 제한될 수 있음)');
-                  },
-                  { enableHighAccuracy: true, timeout: 10000 }
-                );
-              }}
-              className="h-8"
-            >
-              <LocateFixed className="w-3 h-3 mr-1" />
-              현 위치 반영
-            </Button>
-            {userLocation && (
-              <span className="text-blue-600 font-medium">위치 갱신됨</span>
-            )}
-            {locError && (
-              <div className="flex flex-col gap-1">
-                <span className="text-red-500 font-medium">{locError}</span>
-                {locError.includes('HTTPS') && (
-                  <span className="text-[10px] text-gray-400 underline decoration-dotted">테스트 팁: Chrome 설정에서 내부 IP 허용 필요</span>
-                )}
-              </div>
-            )}
-          </div>
-          <KakaoMap
-            parkingLots={parkingLots}
-            height="14rem"
-            onMarkerClick={(id) => {
-              onParkingSelect(id);
-            }}
-            userLocation={userLocation}
-            onAddressFound={setCurrentAddress}
-          />
+      <div className="max-w-lg mx-auto pb-24">
+        {/* AI Briefing Segment */}
+        <div className="px-4 py-6">
+          <AIBriefing weather={weather} parkingLots={parkingLots} />
         </div>
-      </div>
+
+        {/* Current Location Bar */}
+        <div className="px-4 mb-6">
+          <div className="glass-card rounded-2xl p-4 flex items-center gap-4 premium-shadow">
+            <div className="bg-blue-50 p-3 rounded-xl">
+              <MapPin className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-xs font-semibold text-blue-600 mb-0.5">현재 위치한 지역</p>
+              <p className="text-sm font-medium text-gray-800 truncate">{currentAddress}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Map Section */}
+        <div className="px-4 mb-8">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="p-4 flex items-center justify-between bg-gray-50/50 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Info className="w-4 h-4 text-gray-400" />
+                <span className="text-sm font-medium text-gray-600">주변 주차장 보기</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                        setShouldCenterUser(Date.now());
+                      },
+                      () => setLocError('위치 획득 실패')
+                    );
+                  }
+                }}
+                className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2"
+              >
+                <LocateFixed className="w-4 h-4 mr-1.5" />
+                내 위치로
+              </Button>
+            </div>
+            <KakaoMap
+              parkingLots={parkingLots}
+              height="16rem"
+              onMarkerClick={onParkingSelect}
+              userLocation={userLocation}
+              shouldCenterUser={shouldCenterUser}
+              onAddressFound={setCurrentAddress}
+            />
+          </div>
+          {locError && <p className="mt-2 text-[10px] text-red-500 font-medium px-2">{locError}</p>}
+        </div>
 
       {/* Weather summary */}
       {weather && (
@@ -276,7 +392,7 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
           <div className="max-w-lg mx-auto flex items-center gap-3 text-sm text-gray-700">
             <ThermometerSun className="w-4 h-4 text-orange-500" />
             <span>
-              {weather.temperature}°C · {
+              {weather.temperature}C  {
                 { sunny: '맑음', cloudy: '흐림', rainy: '비', snowy: '눈' }[weather.condition] || weather.condition
               }
             </span>
@@ -286,95 +402,63 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="max-w-lg mx-auto flex flex-wrap gap-2">
-          <Button
-            variant={selectedFilter === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedFilter('all')}
-          >
-            전체
-          </Button>
-          <Button
-            variant={selectedFilter === 'nearby' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedFilter('nearby')}
-          >
-            가장 가까운 (Top 5)
-          </Button>
-          <Button
-            variant={sortBy === 'congestion' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSortBy('congestion')}
-          >
-            가용률순
-          </Button>
-          <Button
-            variant={sortBy === 'price' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSortBy('price')}
-          >
-            요금순
-          </Button>
+        {/* Control & List Segment */}
+        <div className="px-4">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-bold text-gray-900">맞춤형 주차장 탐색</h3>
+            <div className="flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+              < Sparkles className="w-3 h-3 text-blue-500" />
+              AI 추천 엔진 가동 중
+            </div>
+          </div>
+
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            {[
+              { id: 'all', label: 'AI 추천' },
+              { id: 'nearby', label: '가까운 순' },
+              { id: 'congestion', label: '여유 공간순' },
+              { id: 'price', label: '최저가순' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedFilter(tab.id as any)}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  selectedFilter === tab.id
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                    : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <AnimatePresence mode="popLayout">
+              {loading ? (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="py-12 text-center"
+                >
+                  <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-sm text-gray-400">최적의 주차장을 선별하고 있습니다...</p>
+                </motion.div>
+              ) : (
+                getFilteredLots().map((lot, idx) => (
+                  <ParkingLotCard
+                    key={lot.id}
+                    lot={lot}
+                    index={idx}
+                    onClick={onParkingSelect}
+                    isBest={idx === 0 && (selectedFilter === 'all' || selectedFilter === 'nearby')}
+                    showPrediction={true}
+                  />
+                ))
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-
-      {/* Parking Lots List */}
-      <div className="max-w-lg mx-auto p-4 space-y-3">
-        {loading && (
-          <Card className="p-4">
-            <p className="text-sm text-gray-500">주차장 정보를 불러오는 중입니다...</p>
-          </Card>
-        )}
-        {!loading && getFilteredLots().map((lot) => (
-          <Card
-            key={lot.id}
-            className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => onParkingSelect(lot.id)}
-          >
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3>{lot.name}</h3>
-                  {lot.type === 'public' && (
-                    <Badge variant="outline" className="text-xs">공영</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-gray-600">{lot.address}</p>
-              </div>
-              <Badge className={getOccupancyColor(lot.availableSpaces ?? 0, lot.totalSpaces || 1)}>
-                {getOccupancyStatus(lot.availableSpaces ?? 0, lot.totalSpaces || 1)}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500 mb-1">잔여 공간</p>
-                <p className="text-blue-600">{lot.availableSpaces}/{lot.totalSpaces}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 mb-1">거리</p>
-                <p>{lot.distance}km</p>
-              </div>
-              <div>
-                <p className="text-gray-500 mb-1">기본 요금</p>
-                <p>{lot.fee.basic.toLocaleString()}원</p>
-              </div>
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {lot.operatingHours}
-              </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                30분 후 만차 확률: {lot.prediction ? Math.round(lot.prediction[0]?.occupancyRate || 0) : 0}%
-              </div>
-            </div>
-          </Card>
-        ))}
       </div>
     </div>
   );

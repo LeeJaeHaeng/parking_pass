@@ -77,6 +77,7 @@ export const mockParkingLots: ParkingLot[] = (parkingLotsSource as any[])
         basicTime: p.fee?.basicTime ?? 30,
         additional: p.fee?.additional ?? 0,
         additionalTime: p.fee?.additionalTime ?? 10,
+        gracePeriod: p.fee?.gracePeriod ?? 0,
         daily: p.fee?.daily ?? 0,
         monthly: p.fee?.monthly ?? 0,
       },

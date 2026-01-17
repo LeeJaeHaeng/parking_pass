@@ -10,7 +10,7 @@ export default function BottomNav({ currentPage, onNavigate }: BottomNavProps) {
     { id: 'home' as const, icon: Home, label: '홈' },
     { id: 'search' as const, icon: Search, label: '검색' },
     { id: 'my-parking' as const, icon: Car, label: '내 주차' },
-    { id: 'my-page' as const, icon: User, label: 'MY' },
+    { id: 'my-page' as const, icon: User, label: '마이' },
   ];
 
   return (

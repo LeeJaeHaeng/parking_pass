@@ -19,6 +19,7 @@ export interface ParkingFee {
   basicTime?: number;
   additional: number;
   additionalTime?: number;
+    gracePeriod?: number;
   daily?: number;
   monthly?: number;
 }
@@ -38,7 +39,7 @@ export interface ParkingLot {
   longitude: number;
   feeInfo?: string;
   type: ParkingLotType;
-  parkingType?: string;  // 노상/노외/부설
+  parkingType?: string;
   hasDisabledParking?: boolean;
   managingOrg?: string;
   phone?: string;
@@ -46,6 +47,7 @@ export interface ParkingLot {
   facilities?: string[];
   dataDate?: string;
   prediction?: PredictionData[];
+  ai_score?: number;
 }
 
 export interface ParkingHistory {

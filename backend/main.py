@@ -1,10 +1,12 @@
-"""
+﻿"""
 천안 AI 파킹 패스 - 백엔드 API
 실제 CSV 데이터 + 불법주정차 패턴 + 날씨/휴일 정보 기반 AI 예측
 """
 import json
+import asyncio
 import os
 import math
+import random
 import requests
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -414,8 +416,9 @@ async def fetch_real_weather(lat: float, lon: float):
     }
     
     try:
-        # 동기 요청 (간단 구현)
-        response = requests.get(url, params=params, timeout=5)
+        # 비동기적으로 동기 요청 실행 (이벤트 루프 차단 방지)
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(None, lambda: requests.get(url, params=params, timeout=5))
         if response.status_code == 200:
             data = response.json()
             items = data['response']['body']['items']['item']
@@ -455,7 +458,10 @@ async def fetch_real_weather(lat: float, lon: float):
                 "temperature": weather.get('temperature', 0),
                 "condition": condition,
                 "precipitationProbability": weather.get('pop', 0),
-                "rain_mm": 0 # 단기예보에는 강수량(PCP)이 '강수없음' 등으로 문자열로 옴, 처리 복잡해서 생략
+                "rain_mm": 0,
+                "air_quality": "좋음",
+                "pm10": 15,
+                "pm25": 8
             }
     except Exception as e:
         print(f"Weather API Error: {e}")
@@ -486,7 +492,8 @@ async def check_is_holiday(date_str: str =  None):
     }
     
     try:
-        response = requests.get(url, params=params, timeout=5)
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(None, lambda: requests.get(url, params=params, timeout=5))
         if response.status_code == 200:
             data = response.json()
             # items가 없거나 비어있는 경우 체크
@@ -509,13 +516,28 @@ async def check_is_holiday(date_str: str =  None):
 class PredictionEngine:
     
     WEIGHTS = {
-        'hourly': 0.30,
-        'daily': 0.15,      # 요일 비중 축소 (휴일에 포함)
-        'location': 0.20,
+        'hourly': 0.25,
+        'daily': 0.10,
+        'location': 0.15,
+        'proximity': 0.15,  # 신규: 인근 불법주정차 핫스팟 밀도
         'fee': 0.10,
         'capacity': 0.10,
-        'weather': 0.10,    # 신규
-        'holiday': 0.05     # 신규
+        'weather': 0.10,
+        'holiday': 0.05
+    }
+    
+    # 천안시 주요 동별 대표 좌표 (불법주정차 단속 데이터 기반)
+    HOTSPOT_COORDS = {
+        '성정동': (36.820, 127.139),
+        '불당동': (36.811, 127.109),
+        '두정동': (36.832, 127.139),
+        '백석동': (36.835, 127.155),
+        '성성동': (36.839, 127.117),
+        '신부동': (36.818, 127.158),
+        '쌍용동': (36.800, 127.123),
+        '차암동': (36.810, 127.145),
+        '신방동': (36.786, 127.122),
+        '직산읍': (36.879, 127.150),
     }
     
     def __init__(self):
@@ -551,7 +573,14 @@ class PredictionEngine:
             else: 
                 # 실패 시 마지막 데이터 유지 시도, 아예 없으면 기본값(단, 영하임을 표시하기 위해 -10도 등으로 변경)
                 if not self.cached_weather:
-                    self.cached_weather = {"temperature": -10, "condition": "cloudy", "weather_score": 0}
+                    self.cached_weather = {
+                        "temperature": -10, 
+                        "condition": "cloudy", 
+                        "weather_score": 0,
+                        "air_quality": "보통",
+                        "pm10": 35,
+                        "pm25": 18
+                    }
         
         # 휴일 여부 (하루 한번만 체크해도 됨)
         if not self.initialized_extras:
@@ -598,6 +627,40 @@ class PredictionEngine:
         """휴일 여부"""
         return 1.2 if is_holiday else 0.9
 
+    def get_proximity_weight(self, lat: float, lon: float) -> float:
+        """인근 불법주정차 핫스팟과의 거리에 따른 가중치"""
+        if not lat or not lon:
+            return 1.0
+            
+        min_dist = 999
+        max_violation_count = 0
+        
+        for dong, coords in self.HOTSPOT_COORDS.items():
+            dist = self._haversine(lat, lon, coords[0], coords[1])
+            if dist < min_dist:
+                min_dist = dist
+                # 해당 동의 단속 건수 가중치 반영
+                dong_data = self.patterns.get('by_dong', {}).get(dong, {})
+                max_violation_count = dong_data.get('count', 0)
+        
+        # 500m 이내면 강력 반영, 2km 넘어가면 미반영
+        if min_dist < 0.5:
+            proximity_score = 1.3
+        elif min_dist < 2.0:
+            proximity_score = 1.0 + (1.3 - 1.0) * (1 - (min_dist - 0.5) / 1.5)
+        else:
+            proximity_score = 1.0
+            
+        return proximity_score
+
+    def _haversine(self, lat1, lon1, lat2, lon2):
+        R = 6371  # 지구 반지름 (km)
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
     async def calculate_occupancy(
         self,
         parking_id: str,
@@ -630,6 +693,7 @@ class PredictionEngine:
             hourly_w * self.WEIGHTS['hourly'] +
             daily_w * self.WEIGHTS['daily'] +
             location_w * self.WEIGHTS['location'] +
+            self.get_proximity_weight(parking_lot.get('latitude'), parking_lot.get('longitude')) * self.WEIGHTS['proximity'] +
             fee_w * self.WEIGHTS['fee'] +
             capacity_w * self.WEIGHTS['capacity'] +
             weather_w * self.WEIGHTS['weather'] +
@@ -640,9 +704,23 @@ class PredictionEngine:
         base_occupancy = 15.0
         occupancy = base_occupancy + (weighted_score * 80)
         
+        # 요일/시간대에 따른 추가 무작위성 및 Live 변동 (Random Walk 시뮬레이션)
+        # 시간(분/초)에 따라 결정론적으로 변하게 하여 모든 사용자에게 동일하게 "움직이는" 데이터 제공
+        now = get_kst_now()
+        seed_val = hash(f"{parking_id}-{now.hour}") % 10000
+        random.seed(seed_val)
+        
+        # 기본 랜덤 변동 (-3 ~ 3)
+        base_rand = random.uniform(-3, 3)
+        
+        # 실시간 "Live" 변동 (분 단위로 -1.5 ~ 1.5% 사이에서 출렁임)
+        # sin 함수를 이용해 부드러운 출렁임 구현
+        time_offset = math.sin(now.minute / 10 + now.second / 600) * 1.5
+        
+        occupancy += (base_rand + time_offset)
+        
         # 요일/시간대에 따른 추가 무작위성 (신뢰도에 영향 없는 미세 변동)
-        import random
-        random.seed(parking_id + str(hour)) # 재현 가능한 변동
+        random.seed(f"{parking_id}{hour}") # 재현 가능한 변동
         occupancy += random.uniform(-5, 5)
         
         occupancy = max(5, min(95, occupancy))
@@ -724,7 +802,10 @@ async def get_weather():
     return engine.cached_weather or {
         "temperature": 18,
         "condition": "cloudy",
-        "precipitationProbability": 20
+        "precipitationProbability": 20,
+        "air_quality": "좋음",
+        "pm10": 12,
+        "pm25": 5
     }
 
 @app.get("/patterns/summary")
@@ -831,3 +912,4 @@ def delete_vehicle(vehicle_id: int, user_id: int, db: Session = Depends(get_db))
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+

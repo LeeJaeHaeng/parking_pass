@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronRight, Car, CreditCard, Bell, Settings, CircleHelp, LogOut, Award, Clock, User, Phone, Mail, Plus, Trash2, Check, FileText, Shield } from 'lucide-react';
+﻿import { useState } from 'react';
+import { ChevronRight, Car, CreditCard, Bell, Settings, CircleHelp, LogOut, Award, Clock, User, Phone, Mail, Plus, Trash2, Check, FileText, Shield, Sparkles } from 'lucide-react';
 import { mockVehicle } from '../data/mockData';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -8,7 +8,6 @@ import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Switch } from '../components/ui/switch'; // Switch 컴포넌트가 있다면 (없으면 아래 div로 구현)
 import {
   Sheet,
   SheetContent,
@@ -36,20 +35,74 @@ interface MyPageProps {
 }
 
 export default function MyPage({ onHistoryClick, onLogout }: MyPageProps) {
-  const [userProfile, setUserProfile] = useState({ name: '홍길동', email: 'hong@example.com' });
-  const [tempName, setTempName] = useState(userProfile.name);
+  const [userProfile, setUserProfile] = useState({ name: '홍길동', email: 'hong@example.com', phone: '010-1234-5678' });
+  const [tempProfile, setTempProfile] = useState(userProfile);
   const [notifications, setNotifications] = useState({ marketing: true, parking: true, bill: false });
-  const [vehicles, setVehicles] = useState([mockVehicle]);
+  const [vehicles, setVehicles] = useState([
+    { ...mockVehicle, isDefault: true, id: 'v1' },
+    { licensePlate: '56너 7890', model: '기아 EV6', color: '그레이', isDefault: false, id: 'v2' }
+  ]);
+  const [coupons, setCoupons] = useState([
+    { id: 'c1', name: '웰컴 할인 쿠폰', discount: 2000, type: 'fixed', expiry: '2025.12.31', used: false },
+    { id: 'c2', name: '첫 주차 감사 쿠폰', discount: 10, type: 'percent', expiry: '2025.06.30', used: false }
+  ]);
   const [paymentMethods, setPaymentMethods] = useState([
     { id: 1, name: '신한카드', number: '1234-****-****-5678', isDefault: true },
     { id: 2, name: '카카오페이', number: '연동됨', isDefault: false }
   ]);
+  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
+  const [newPayment, setNewPayment] = useState({ name: '', number: '' });
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'month' | 'year'>('all');
+  const [newVehicle, setNewVehicle] = useState({ licensePlate: '', model: '', color: '' });
 
   const totalParkingCount = 47;
   const totalSpent = 142500;
 
   const handleUpdateProfile = () => {
-    setUserProfile(prev => ({ ...prev, name: tempName }));
+    setUserProfile(tempProfile);
+  };
+
+  const handleAddVehicle = () => {
+    if (!newVehicle.licensePlate) return;
+    setVehicles(prev => [...prev, { ...newVehicle, isDefault: false, id: `v${Date.now()}` }]);
+    setNewVehicle({ licensePlate: '', model: '', color: '' });
+    setIsAddVehicleOpen(false);
+  };
+
+  const handleDeleteVehicle = (id: string) => {
+    setVehicles(prev => prev.filter(v => v.id !== id));
+  };
+
+  const setDefaultVehicle = (id: string) => {
+    setVehicles(prev => prev.map(v => ({ ...v, isDefault: v.id === id })));
+  };
+
+  const handleAddPayment = () => {
+    if (!newPayment.name || !newPayment.number) return;
+    setPaymentMethods(prev => [...prev, {
+      id: Date.now(),
+      name: newPayment.name,
+      number: newPayment.number,
+      isDefault: false
+    }]);
+    setNewPayment({ name: '', number: '' });
+    setIsAddPaymentOpen(false);
+  };
+
+  const setDefaultPayment = (id: number) => {
+    setPaymentMethods(prev => prev.map(pm => ({ ...pm, isDefault: pm.id === id })));
+  };
+
+  const handleDeletePayment = (id: number) => {
+    setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
+  };
+
+  const handleWithdrawal = () => {
+    if (confirm('정말로 회원 탈퇴를 하시겠습니까? 모든 정보와 결제 내역이 삭제됩니다.')) {
+      alert('회원 탈퇴가 완료되었습니다.');
+      onLogout();
+    }
   };
 
   const toggleNotification = (key: keyof typeof notifications) => {
@@ -66,373 +119,522 @@ export default function MyPage({ onHistoryClick, onLogout }: MyPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white pb-8">
-        <div className="max-w-lg mx-auto p-4">
-          <h1 className="text-xl mb-6 font-bold">마이페이지</h1>
-          
-          {/* User Profile */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center gap-4 mb-4">
-              <Avatar className="w-16 h-16 border-2 border-white/20">
-                <AvatarFallback className="bg-blue-500 text-white text-xl font-bold">
-                  {userProfile.name[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold mb-1">{userProfile.name}</h2>
-                <p className="text-sm opacity-90">{userProfile.email}</p>
-              </div>
-              
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={() => setTempName(userProfile.name)}>
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>프로필 수정</DialogTitle>
-                    <DialogDescription>앱에서 사용할 이름을 설정합니다.</DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                       <Label htmlFor="name">이름</Label>
-                       <Input id="name" value={tempName} onChange={(e) => setTempName(e.target.value)} />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button onClick={handleUpdateProfile}>저장</Button>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+    <div className="min-h-screen bg-gray-50/50 pb-20">
+      {/* Premium Header */}
+      <div className="bg-white sticky top-0 z-20 px-4 py-4 border-b border-gray-100 backdrop-blur-md bg-white/80">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="premium-gradient p-1.5 rounded-xl shadow-lg shadow-blue-200">
+               <User className="w-4 h-4 text-white" />
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/10 rounded-lg p-3 text-center transition-colors hover:bg-white/20">
-                <p className="text-sm opacity-90 mb-1">총 이용 횟수</p>
-                <p className="text-xl font-bold">{totalParkingCount}회</p>
-              </div>
-              <div className="bg-white/10 rounded-lg p-3 text-center transition-colors hover:bg-white/20">
-                <p className="text-sm opacity-90 mb-1">누적 결제</p>
-                <p className="text-xl font-bold tracking-tight text-yellow-300">
-                  {formatMoney(totalSpent)}
-                </p>
-              </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none">마이페이지</h1>
+              <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase mt-0.5">Account Settings</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto -mt-4 px-4 space-y-4">
-        {/* Vehicle Info */}
+      <div className="max-w-lg mx-auto p-4 space-y-6 mt-4">
+        {/* Profile Glass Card */}
+        <div className="glass-card p-6 premium-shadow border-white/60 relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full" />
+          
+          <div className="flex items-center gap-5 mb-8">
+            <Avatar className="w-20 h-20 border-4 border-white shadow-xl">
+              <AvatarFallback className="premium-gradient text-white text-2xl font-black">
+                {userProfile.name[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">{userProfile.name}</h2>
+                <Badge className="bg-blue-100 text-blue-600 border-none font-bold text-[10px]">GOLD</Badge>
+              </div>
+              <p className="text-sm text-gray-500 font-medium">{userProfile.email}</p>
+            </div>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400" onClick={() => setTempProfile(userProfile)}>
+                  <Settings className="w-5 h-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="rounded-3xl border-none">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">프로필 편집</DialogTitle>
+                  <DialogDescription>기본 정보를 수정할 수 있습니다.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  <div className="grid gap-2">
+                     <Label htmlFor="name" className="text-sm font-bold text-gray-500 ml-1">이름</Label>
+                     <Input id="name" value={tempProfile.name} onChange={(e) => setTempProfile(prev => ({ ...prev, name: e.target.value }))} className="h-12 rounded-xl" />
+                  </div>
+                  <div className="grid gap-2">
+                     <Label htmlFor="email" className="text-sm font-bold text-gray-500 ml-1">이메일</Label>
+                     <Input id="email" value={tempProfile.email} onChange={(e) => setTempProfile(prev => ({ ...prev, email: e.target.value }))} className="h-12 rounded-xl" />
+                  </div>
+                  <div className="grid gap-2">
+                     <Label htmlFor="phone" className="text-sm font-bold text-gray-500 ml-1">전화번호</Label>
+                     <Input id="phone" value={tempProfile.phone} onChange={(e) => setTempProfile(prev => ({ ...prev, phone: e.target.value }))} className="h-12 rounded-xl" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button onClick={handleUpdateProfile} className="w-full h-12 rounded-xl bg-blue-600">변경사항 저장</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-slate-900/5 rounded-2xl p-4 transition-colors hover:bg-slate-900/10">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5 px-0.5">이용 횟수</p>
+              <div className="flex items-baseline gap-1">
+                <p className="text-2xl font-black text-slate-800">{totalParkingCount}</p>
+                <p className="text-sm font-bold text-slate-400">회</p>
+              </div>
+            </div>
+            <div className="bg-blue-600/5 rounded-2xl p-4 transition-colors hover:bg-blue-600/10 border border-blue-600/5">
+              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1.5 px-0.5">누적 지출</p>
+              <p className="text-2xl font-black text-blue-600 tracking-tight">
+                {formatMoney(totalSpent)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Vehicle Info Card */}
         <Sheet>
           <SheetTrigger asChild>
-            <Card className="p-4 cursor-pointer hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">등록 차량</h3>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+            <div className="bg-white rounded-3xl p-5 border border-gray-100 cursor-pointer group active:scale-[0.98] transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Car className="w-4 h-4 text-blue-600" />
+                  <h3 className="font-bold text-gray-900">내 차량 관리</h3>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
               </div>
               
-              <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                  <Car className="w-6 h-6" />
+              <div className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4">
+                <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                  <Car className="w-7 h-7" />
                 </div>
-                <div className="flex-1">
-                  <p className="mb-1 font-medium">{vehicles[0].licensePlate}</p>
-                  <p className="text-sm text-gray-600">{vehicles[0].model} · {vehicles[0].color}</p>
+                <div className="flex-1 overflow-hidden">
+                  <p className="mb-0.5 font-black text-gray-900 text-lg">{vehicles.find(v => v.isDefault)?.licensePlate || vehicles[0].licensePlate}</p>
+                  <p className="text-sm text-gray-500 font-medium">{(vehicles.find(v => v.isDefault) || vehicles[0]).model}  {(vehicles.find(v => v.isDefault) || vehicles[0]).color}</p>
                 </div>
-                <Badge variant="outline" className="bg-white">대표차량</Badge>
+                <Badge className="bg-blue-600 text-white border-none py-1.5 rounded-lg text-[10px]">대표</Badge>
               </div>
-            </Card>
+            </div>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-xl h-[80vh]">
-            <SheetHeader>
-               <SheetTitle>차량 관리</SheetTitle>
-            </SheetHeader>
-            <div className="py-4 space-y-4">
-               {vehicles.map((v, i) => (
-                 <div key={i} className="flex items-center gap-4 p-4 border rounded-xl bg-white shadow-sm">
-                    <Car className="w-8 h-8 text-blue-600" />
-                    <div className="flex-1">
-                       <p className="font-bold text-lg">{v.licensePlate}</p>
-                       <p className="text-sm text-gray-500">{v.model} | {v.color}</p>
+          <SheetContent side="bottom" className="rounded-t-[2.5rem] h-[80vh] border-none p-0 overflow-hidden">
+            <div className="p-8 bg-white h-full flex flex-col">
+              <SheetHeader className="mb-8 text-left">
+                 <SheetTitle className="text-2xl font-black tracking-tight">차량 관리</SheetTitle>
+                 <SheetDescription>등록된 차량 정보를 조회하고 관리합니다.</SheetDescription>
+              </SheetHeader>
+              <div className="flex-1 space-y-4 overflow-y-auto">
+                  {vehicles.map((v) => (
+                    <div key={v.id} className={`flex items-center gap-4 p-5 border rounded-[2rem] transition-all ${v.isDefault ? 'border-blue-500 bg-blue-50/50' : 'border-slate-100 bg-slate-50'}`}>
+                       <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                         <Car className={`w-6 h-6 ${v.isDefault ? 'text-blue-600' : 'text-slate-400'}`} />
+                       </div>
+                       <div className="flex-1">
+                          <p className="font-black text-slate-800 text-xl tracking-tight">{v.licensePlate}</p>
+                          <p className="text-sm text-slate-400 font-bold">{v.model} | {v.color}</p>
+                       </div>
+                       <div className="flex items-center gap-2">
+                        {v.isDefault ? (
+                          <Badge className="bg-blue-600 text-white border-none h-8 px-4 rounded-xl">대표차량</Badge>
+                        ) : (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => setDefaultVehicle(v.id)} className="text-blue-600 font-bold">기본설정</Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteVehicle(v.id)} className="text-rose-500 hover:bg-rose-50 rounded-full h-10 w-10">
+                              <Trash2 className="w-5 h-5" />
+                            </Button>
+                          </>
+                        )}
+                       </div>
                     </div>
-                    {i === 0 ? <Badge>대표</Badge> : (
-                      <Button variant="ghost" size="icon" className="text-red-500">
-                         <Trash2 className="w-5 h-5" />
+                  ))}
+                  
+                  <Dialog open={isAddVehicleOpen} onOpenChange={setIsAddVehicleOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full h-20 border-dashed border-2 border-slate-200 rounded-[2rem] text-slate-400 font-bold hover:bg-slate-50 transition-colors">
+                        <Plus className="w-6 h-6 mr-3" />
+                        새 차량 추가하기
                       </Button>
-                    )}
-                 </div>
-               ))}
-               <Button variant="outline" className="w-full h-12 border-dashed border-2">
-                 <Plus className="w-5 h-5 mr-2" />
-                 차량 추가하기
-               </Button>
+                    </DialogTrigger>
+                    <DialogContent className="rounded-3xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl font-bold">새 차량 등록</DialogTitle>
+                        <DialogDescription>차량 정보를 정확히 입력해주세요.</DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label className="text-sm font-bold text-gray-500 ml-1">차량 번호</Label>
+                          <Input placeholder="예: 12가 3456" value={newVehicle.licensePlate} onChange={e => setNewVehicle(prev => ({ ...prev, licensePlate: e.target.value }))} className="h-12 rounded-xl" />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label className="text-sm font-bold text-gray-500 ml-1">차종/모델</Label>
+                          <Input placeholder="예: 쏘나타" value={newVehicle.model} onChange={e => setNewVehicle(prev => ({ ...prev, model: e.target.value }))} className="h-12 rounded-xl" />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label className="text-sm font-bold text-gray-500 ml-1">색상</Label>
+                          <Input placeholder="예: 화이트" value={newVehicle.color} onChange={e => setNewVehicle(prev => ({ ...prev, color: e.target.value }))} className="h-12 rounded-xl" />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleAddVehicle} className="w-full h-12 bg-blue-600 rounded-xl">등록하기</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+               </div>
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Menu Items */}
-        <Card className="divide-y overflow-hidden">
+        {/* Main Menu List */}
+        <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
             {/* 이용 내역 */}
             <button
               onClick={onHistoryClick}
-              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 group"
             >
-              <Clock className="w-5 h-5 text-gray-600" />
-              <span className="flex-1 text-left">이용 내역</span>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                <Clock className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+              </div>
+              <span className="flex-1 text-left font-bold text-gray-700">이용 내역</span>
+              <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all" />
             </button>
+
+            {/* 공지사항 */}
+            <Sheet>
+               <SheetTrigger asChild>
+                <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 group">
+                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                    <Bell className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+                  </div>
+                  <span className="flex-1 text-left font-bold text-gray-700">공지사항</span>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all" />
+                </button>
+               </SheetTrigger>
+               <SheetContent side="bottom" className="rounded-t-[2.5rem] h-[70vh] border-none p-8 overflow-y-auto">
+                 <SheetHeader className="mb-8 text-left">
+                    <SheetTitle className="text-2xl font-black">공지사항</SheetTitle>
+                 </SheetHeader>
+                 <div className="space-y-4">
+                    {[
+                      { title: '설 연휴 공영주차장 무료 개방 안내', date: '2025.01.10' },
+                      { title: '시스템 정기 점검 안내 (1/15 02:00 ~ 04:00)', date: '2025.01.05' },
+                      { title: 'AI 파킹 패스 1.0 정식 버전 업데이트 노트', date: '2025.01.01' }
+                    ].map((notice, i) => (
+                      <div key={i} className="p-5 border-b border-gray-50 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer">
+                        <p className="font-bold text-gray-800 mb-1">{notice.title}</p>
+                        <p className="text-xs text-gray-400">{notice.date}</p>
+                      </div>
+                    ))}
+                 </div>
+               </SheetContent>
+            </Sheet>
+
+            {/* 자주 묻는 질문 */}
+            <Sheet>
+               <SheetTrigger asChild>
+                <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 group">
+                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                    <CircleHelp className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+                  </div>
+                  <span className="flex-1 text-left font-bold text-gray-700">자주 묻는 질문</span>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all" />
+                </button>
+               </SheetTrigger>
+               <SheetContent side="bottom" className="rounded-t-[2.5rem] h-[70vh] border-none p-8 overflow-y-auto">
+                 <SheetHeader className="mb-8 text-left">
+                    <SheetTitle className="text-2xl font-black">자주 묻는 질문</SheetTitle>
+                 </SheetHeader>
+                 <div className="space-y-6">
+                    {[
+                      { q: '결제 수단은 어떻게 변경하나요?', a: '마이페이지 > 결제 수단 관리에서 새로운 카드를 등록하거나 기본 결제 수단을 변경하실 수 있습니다.' },
+                      { q: '영수증 발급은 어디서 하나요?', a: '이용 내역 상세 보기에서 각 결제건별 영수증을 확인 및 저장하실 수 있습니다.' },
+                      { q: '주차장 할인은 어떻게 적용되나요?', a: '경차, 저공해 차량 등 감면 대상 차량은 출차 시 자동으로 할인 요금이 적용됩니다.' }
+                    ].map((faq, i) => (
+                      <div key={i} className="space-y-2">
+                        <p className="font-black text-gray-900 flex gap-2">
+                          <span className="text-blue-600">Q.</span> {faq.q}
+                        </p>
+                        <div className="p-4 bg-gray-50 rounded-2xl text-sm text-gray-600 leading-relaxed">
+                          {faq.a}
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+               </SheetContent>
+            </Sheet>
 
             {/* 결제 수단 관리 */}
             <Sheet>
                <SheetTrigger asChild>
-                <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
-                  <CreditCard className="w-5 h-5 text-gray-600" />
-                  <span className="flex-1 text-left">결제 수단 관리</span>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 group">
+                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                    <CreditCard className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+                  </div>
+                  <span className="flex-1 text-left font-bold text-gray-700">결제 수단 관리</span>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all" />
                 </button>
                </SheetTrigger>
-               <SheetContent side="bottom" className="rounded-t-xl h-auto min-h-[50vh]">
-                 <SheetHeader>
-                    <SheetTitle>결제 수단 관리</SheetTitle>
+               <SheetContent side="bottom" className="rounded-t-[2.5rem] h-auto min-h-[50vh] border-none p-8">
+                 <SheetHeader className="mb-8 text-left">
+                    <SheetTitle className="text-2xl font-black">결제 수단</SheetTitle>
                  </SheetHeader>
-                 <div className="py-6 space-y-3">
+                 <div className="space-y-4">
                    {paymentMethods.map(pm => (
-                     <div key={pm.id} className="flex items-center justify-between p-4 border rounded-xl">
-                        <div className="flex items-center gap-3">
-                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${pm.id === 1 ? 'bg-blue-100' : 'bg-yellow-100'}`}>
-                             <CreditCard className={`w-5 h-5 ${pm.id === 1 ? 'text-blue-600' : 'text-yellow-600'}`} />
-                           </div>
-                           <div>
-                              <p className="font-medium">{pm.name}</p>
-                              <p className="text-xs text-gray-500">{pm.number}</p>
-                           </div>
-                        </div>
-                        {pm.isDefault && <Badge variant="secondary">기본</Badge>}
-                     </div>
+                      <div key={pm.id} className={`flex items-center justify-between p-5 border rounded-3xl transition-all ${pm.isDefault ? 'border-blue-500 bg-blue-50/50' : 'border-slate-100 bg-slate-50'}`}>
+                         <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${pm.id === 1 ? 'bg-blue-600' : 'bg-yellow-400'}`}>
+                              <CreditCard className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                               <p className="font-black text-slate-800 text-lg leading-tight">{pm.name}</p>
+                               <p className="text-xs text-slate-400 font-bold mt-1 tracking-wider">{pm.number}</p>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           {pm.isDefault ? (
+                             <Badge className="bg-blue-600 text-white border-none h-7 px-3 rounded-lg font-bold">기본</Badge>
+                           ) : (
+                             <>
+                               <Button variant="ghost" size="sm" onClick={() => setDefaultPayment(pm.id)} className="text-blue-600 font-bold">기본설정</Button>
+                               <Button variant="ghost" size="icon" onClick={() => handleDeletePayment(pm.id)} className="text-rose-500 hover:bg-rose-50 rounded-full h-10 w-10">
+                                 <Trash2 className="w-5 h-5" />
+                               </Button>
+                             </>
+                           )}
+                         </div>
+                      </div>
                    ))}
-                   <Button className="w-full mt-4">카드 등록하기</Button>
-                 </div>
+                    <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="w-full h-16 rounded-2xl bg-slate-900 font-bold text-lg mt-4">새 카드 추가</Button>
+                      </DialogTrigger>
+                      <DialogContent className="rounded-3xl">
+                        <DialogHeader>
+                          <DialogTitle className="text-xl font-bold">새 결제수단 등록</DialogTitle>
+                          <DialogDescription>카드 정보를 입력해주세요.</DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <Label className="text-sm font-bold text-gray-500 ml-1">카드명</Label>
+                            <Input placeholder="예: 신한카드" value={newPayment.name} onChange={e => setNewPayment(prev => ({ ...prev, name: e.target.value }))} className="h-12 rounded-xl" />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label className="text-sm font-bold text-gray-500 ml-1">카드번호</Label>
+                            <Input placeholder="예: 1234-****-****-5678" value={newPayment.number} onChange={e => setNewPayment(prev => ({ ...prev, number: e.target.value }))} className="h-12 rounded-xl" />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button onClick={handleAddPayment} className="w-full h-12 bg-blue-600 rounded-xl">등록하기</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                </SheetContent>
             </Sheet>
 
             {/* 알림 설정 */}
             <Sheet>
               <SheetTrigger asChild>
-                <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
-                  <Bell className="w-5 h-5 text-gray-600" />
-                  <span className="flex-1 text-left">알림 설정</span>
-                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">ON</Badge>
-                  <ChevronRight className="w-5 h-5 text-gray-400 ml-2" />
+                <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 group">
+                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                    <Bell className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+                  </div>
+                  <span className="flex-1 text-left font-bold text-gray-700">알림 설정</span>
+                  <Badge className="bg-blue-50 text-blue-600 border-none px-3 font-black text-[10px]">ON</Badge>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all ml-1" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-xl h-auto">
-                 <SheetHeader>
-                   <SheetTitle>알림 설정</SheetTitle>
+              <SheetContent side="bottom" className="rounded-t-[2.5rem] h-auto border-none p-8">
+                 <SheetHeader className="mb-0 text-left">
+                   <SheetTitle className="text-2xl font-black">알림 설정</SheetTitle>
                  </SheetHeader>
-                 <div className="py-6 space-y-6">
+                 <div className="py-8 space-y-8">
                     <div className="flex items-center justify-between">
-                       <div className="space-y-0.5">
-                          <Label className="text-base">마케팅 알림</Label>
-                          <p className="text-sm text-gray-500">할인 및 이벤트 소식 받기</p>
+                       <div className="space-y-1">
+                          <Label className="text-lg font-black text-slate-800">마케팅 혜택 알림</Label>
+                          <p className="text-sm text-slate-400 font-medium">다양한 할인 및 제휴 정보 소식 받기</p>
                        </div>
                        <div 
-                         className={`w-12 h-7 rounded-full p-1 cursor-pointer transition-colors ${notifications.marketing ? 'bg-blue-600' : 'bg-gray-200'}`}
+                         className={`w-14 h-8 rounded-full p-1 cursor-pointer transition-all duration-300 ${notifications.marketing ? 'bg-blue-600' : 'bg-gray-200'}`}
                          onClick={() => toggleNotification('marketing')}
                        >
-                          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${notifications.marketing ? 'translate-x-5' : 'translate-x-0'}`} />
+                          <div className={`w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications.marketing ? 'translate-x-6' : 'translate-x-0'}`} />
                        </div>
                     </div>
                     <div className="flex items-center justify-between">
-                       <div className="space-y-0.5">
-                          <Label className="text-base">주차 현황 알림</Label>
-                          <p className="text-sm text-gray-500">입출차 및 요금 알림</p>
+                       <div className="space-y-1">
+                          <Label className="text-lg font-black text-slate-800">실시간 주차 현황</Label>
+                          <p className="text-sm text-slate-400 font-medium">입/출차 내역 및 주차 요금 변동 안내</p>
                        </div>
                        <div 
-                         className={`w-12 h-7 rounded-full p-1 cursor-pointer transition-colors ${notifications.parking ? 'bg-blue-600' : 'bg-gray-200'}`}
+                         className={`w-14 h-8 rounded-full p-1 cursor-pointer transition-all duration-300 ${notifications.parking ? 'bg-blue-600' : 'bg-gray-200'}`}
                          onClick={() => toggleNotification('parking')}
                        >
-                          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${notifications.parking ? 'translate-x-5' : 'translate-x-0'}`} />
+                          <div className={`w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-300 ${notifications.parking ? 'translate-x-6' : 'translate-x-0'}`} />
                        </div>
                     </div>
                  </div>
               </SheetContent>
             </Sheet>
 
-            {/* 할인 혜택 */}
+            {/* 쿠폰함 */}
             <Sheet>
               <SheetTrigger asChild>
-                <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
-                  <Award className="w-5 h-5 text-gray-600" />
-                  <span className="flex-1 text-left">할인 혜택</span>
-                  <Badge variant="secondary" className="text-xs text-red-600 bg-red-100 font-bold">NEW</Badge>
-                  <ChevronRight className="w-5 h-5 text-gray-400 ml-2" />
+                <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors group">
+                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                    <Award className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
+                  </div>
+                  <span className="flex-1 text-left font-bold text-gray-700">할인 쿠폰함</span>
+                  <Badge className="bg-rose-50 text-rose-500 border-none px-3 font-black text-[10px]">NEW</Badge>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all ml-1" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-xl h-[60vh]">
-                 <SheetHeader>
-                   <SheetTitle>보유 쿠폰</SheetTitle>
+              <SheetContent side="bottom" className="rounded-t-[2.5rem] h-[60vh] border-none p-8">
+                 <SheetHeader className="mb-8 text-left">
+                   <SheetTitle className="text-2xl font-black">내 쿠폰함</SheetTitle>
                  </SheetHeader>
-                 <div className="py-4 space-y-3">
-                    <div className="border border-blue-200 bg-blue-50 rounded-lg p-4 flex justify-between items-center">
-                       <div>
-                          <p className="font-bold text-blue-700">신규 가입 환영 쿠폰</p>
-                          <p className="text-xs text-gray-500">2000원 할인 (조건 없음)</p>
-                       </div>
-                       <Button size="sm" className="bg-blue-600">사용 가능</Button>
-                    </div>
-                    <div className="border border-gray-200 rounded-lg p-4 flex justify-between items-center opacity-60">
-                       <div>
-                          <p className="font-bold text-gray-700">첫 결제 감사 쿠폰</p>
-                          <p className="text-xs text-gray-500">10% 할인 (최대 3000원)</p>
-                       </div>
-                       <Button size="sm" variant="outline" disabled>사용 완료</Button>
-                    </div>
+                 <div className="space-y-4">
+                    {coupons.map(coupon => (
+                      <div key={coupon.id} className={`border-2 rounded-3xl p-6 relative overflow-hidden group ${coupon.used ? 'border-slate-100 bg-slate-50 opacity-60' : 'border-blue-500 bg-blue-50/50'}`}>
+                         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                            <Award size={64} className="group-hover:rotate-12 transition-transform" />
+                         </div>
+                         <div className="flex justify-between items-center relative z-10">
+                            <div>
+                               <p className={`font-black text-lg mb-0.5 ${coupon.used ? 'text-slate-700' : 'text-blue-700'}`}>{coupon.name}</p>
+                               <p className={`text-sm font-bold uppercase tracking-tight ${coupon.used ? 'text-slate-500' : 'text-blue-500'}`}>
+                                 {coupon.type === 'fixed' ? `${coupon.discount.toLocaleString()} KRW OFF` : `${coupon.discount}% OFF`}
+                               </p>
+                               <p className="text-[10px] text-gray-400 mt-3 font-medium">유효기간: {coupon.expiry} 까지</p>
+                            </div>
+                            {coupon.used ? (
+                              <Button size="sm" variant="ghost" disabled className="font-bold">사용 완료</Button>
+                            ) : (
+                              <Button size="sm" className="bg-blue-600 rounded-xl px-4 h-10 font-bold">사용 가능</Button>
+                            )}
+                         </div>
+                      </div>
+                    ))}
                  </div>
               </SheetContent>
             </Sheet>
-        </Card>
+        </div>
 
-        {/* Settings */}
-        <Card className="divide-y overflow-hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
-                <Settings className="w-5 h-5 text-gray-600" />
-                <span className="flex-1 text-left">환경 설정</span>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-xl h-auto">
-              <SheetHeader>
-                <SheetTitle>환경 설정</SheetTitle>
-              </SheetHeader>
-              <div className="py-6 space-y-4">
-                <div className="flex justify-between items-center">
-                  <span>앱 버전</span>
-                  <span className="text-gray-500">v1.0.0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                   <span>캐시 삭제</span>
-                   <Button variant="outline" size="sm">삭제</Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+        {/* Support & Others */}
+        <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+          <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 group">
+             <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                <Settings className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+             </div>
+             <span className="flex-1 text-left font-bold text-gray-700">앱 환경 설정</span>
+             <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all" />
+          </button>
           
           <Dialog>
             <DialogTrigger asChild>
-              <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
-                <CircleHelp className="w-5 h-5 text-gray-600" />
-                <span className="flex-1 text-left">고객센터</span>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
+              <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors group">
+                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                  <CircleHelp className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+                </div>
+                <span className="flex-1 text-left font-bold text-gray-700">고객 지원 센터</span>
+                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-all" />
               </button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="rounded-3xl border-none">
                <DialogHeader>
-                  <DialogTitle>고객센터</DialogTitle>
+                  <DialogTitle className="text-xl font-bold">고객센터</DialogTitle>
                   <DialogDescription>
-                     궁금한 점이 있으신가요? 언제든 연락주세요.
+                     도움이 필요하신가요? 천안 스마트시티 팀이 해결해 드립니다.
                   </DialogDescription>
                </DialogHeader>
-               <div className="space-y-4 py-4">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                     <Phone className="w-5 h-5 text-blue-600" />
-                     <div className="flex-1">
-                        <p className="text-sm font-medium">전화 문의</p>
-                        <p className="text-lg font-bold">1588-0000</p>
+               <div className="space-y-4 py-6">
+                  <div className="flex items-center gap-4 p-5 bg-gray-50 rounded-[1.5rem] hover:bg-blue-50 transition-colors cursor-pointer group">
+                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                        <Phone className="w-6 h-6 text-blue-600 group-hover:animate-bounce" />
                      </div>
-                     <Button variant="outline" size="sm">전화하기</Button>
+                     <div className="flex-1">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5">Phone Support</p>
+                        <p className="text-xl font-black text-gray-800 tracking-tight">1588-0000</p>
+                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                     <Mail className="w-5 h-5 text-blue-600" />
-                     <div className="flex-1">
-                        <p className="text-sm font-medium">이메일 문의</p>
-                        <p className="text-sm">help@cheonanparking.com</p>
+                  <div className="flex items-center gap-4 p-5 bg-gray-50 rounded-[1.5rem] hover:bg-blue-50 transition-colors cursor-pointer group">
+                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                        <Mail className="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform" />
                      </div>
-                     <Button variant="outline" size="sm">메일쓰기</Button>
+                     <div className="flex-1">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5">Email Inquiry</p>
+                        <p className="text-sm font-black text-gray-800">help@cheonanparking.com</p>
+                     </div>
                   </div>
                </div>
                <DialogFooter>
-                  <DialogClose asChild><Button className="w-full">닫기</Button></DialogClose>
+                  <DialogClose asChild><Button className="w-full h-12 bg-blue-600 rounded-xl">창 닫기</Button></DialogClose>
                </DialogFooter>
             </DialogContent>
           </Dialog>
-        </Card>
+        </div>
 
-        {/* App Info */}
-        <Card className="p-4">
-          <div className="space-y-2 text-sm text-gray-600">
-            <div className="flex justify-between">
-              <span>앱 버전</span>
-              <span>1.0.0</span>
-            </div>
-            <Separator />
+        {/* Footer Info */}
+        <div className="px-2 pt-4">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-400 font-bold mb-8">
             <Sheet>
                <SheetTrigger asChild>
-                <button className="w-full flex justify-between pt-1 hover:text-blue-600">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>이용약관</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <button className="hover:text-blue-600 transition-colors uppercase tracking-tight">이용약관</button>
                </SheetTrigger>
-               <SheetContent className="overflow-y-auto">
-                 <SheetHeader>
-                   <SheetTitle>이용약관</SheetTitle>
-                   <SheetDescription>2025년 3월 1일 시행</SheetDescription>
+               <SheetContent side="right" className="w-[100vw] sm:w-[450px] overflow-y-auto">
+                 <SheetHeader className="mb-8">
+                   <SheetTitle className="text-2xl font-black">서비스 이용약관</SheetTitle>
+                   <p className="text-xs text-slate-400">최종 수정일: 2025.03.01</p>
                  </SheetHeader>
-                 <div className="py-4 text-sm text-gray-600 space-y-4">
-                   <p><strong>제 1 조 (목적)</strong><br />본 약관은 천안 AI 파킹 패스(이하 "회사")가 제공하는 서비스 이용에 관한 권리 및 의무를 규정합니다.</p>
-                   <p><strong>제 2 조 (용어의 정의)</strong><br />① "서비스"란 회사가 제공하는 주차장 정보, 결제 등 제반 서비스를 의미합니다.</p>
-                   {/* ... 더미 텍스트 ... */}
+                 <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
+                   <p><strong>제 1 조 (목적)</strong><br />본 약관은 회사가 운영하는 "천안 AI 파킹 패스"에서 제공하는 주차 관련 서비스의 이용 조건 및 절차를 규정함을 목적으로 합니다.</p>
+                   {/* ...약관 생략... */}
                  </div>
                </SheetContent>
             </Sheet>
 
             <Sheet>
                <SheetTrigger asChild>
-                <button className="w-full flex justify-between hover:text-blue-600">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    <span>개인정보 처리방침</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <button className="hover:text-blue-600 transition-colors uppercase tracking-tight underline underline-offset-4 decoration-2">개인정보 처리방침</button>
                </SheetTrigger>
-               <SheetContent className="overflow-y-auto">
-                 <SheetHeader>
-                   <SheetTitle>개인정보 처리방침</SheetTitle>
-                   <SheetDescription>고객님의 소중한 정보를 안전하게 보호합니다.</SheetDescription>
+               <SheetContent side="right" className="w-[100vw] sm:w-[450px] overflow-y-auto">
+                 <SheetHeader className="mb-8">
+                   <SheetTitle className="text-2xl font-black">개인정보 처리방침</SheetTitle>
                  </SheetHeader>
-                 <div className="py-4 text-sm text-gray-600 space-y-4">
-                   <p><strong>1. 수집하는 개인정보 항목</strong><br />이름, 전화번호, 차량번호, 이메일, 결제 정보 등</p>
-                   <p><strong>2. 개인정보의 수집 및 이용 목적</strong><br />서비스 이용에 따른 본인 확인, 개인 식별, 불량 회원의 부정 이용 방지 등</p>
+                 <div className="space-y-6 text-sm text-slate-600">
+                    <p>회사는 고객님의 소중한 개인정보를 안전하게 보호하기 위해 최선을 다하고 있습니다.</p>
+                    {/* ...생략... */}
                  </div>
                </SheetContent>
             </Sheet>
+            
+            <span className="ml-auto opacity-30">VERSION 1.0.0-PRO</span>
           </div>
-        </Card>
 
-        {/* Logout */}
-        <Button variant="outline" className="w-full mb-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={onLogout}>
-          <LogOut className="w-4 h-4 mr-2" />
-          로그아웃
-        </Button>
+          <Button variant="ghost" className="w-full h-14 rounded-2xl text-rose-500 font-black hover:bg-rose-50 hover:text-rose-600" onClick={onLogout}>
+            <LogOut className="w-5 h-5 mr-3" />
+            로그아웃
+          </Button>
 
-        {/* Footer */}
-        <div className="text-center text-xs text-gray-500 pb-8">
-          <p>천안 AI 파킹 패스</p>
-          <p className="mt-1">Cheonan AI Parking Pass</p>
-          <p className="mt-2">© 2025 All rights reserved</p>
+          <Button variant="ghost" className="w-full h-10 rounded-xl text-gray-400 text-[10px] font-bold mt-2" onClick={handleWithdrawal}>
+            회원 탈퇴
+          </Button>
+
+          <div className="text-center mt-12 mb-8 space-y-2">
+            <h4 className="text-[10px] font-black tracking-[0.4em] text-slate-200">CHEONAN AI PARKING PASS</h4>
+            <p className="text-[9px] text-slate-300 font-medium"> 2025 SMART CITY INFRASTRUCTURE. ALL RIGHTS RESERVED.</p>
+          </div>
         </div>
       </div>
     </div>

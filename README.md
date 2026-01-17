@@ -28,11 +28,22 @@
 
 - **카카오맵 연동**: 천안시 내 모든 공영/민영 주차장 위치를 지도 위에 표시합니다.
 - **스마트 필터**: 무료/유료, 공영/민영, 거리순 등 원하는 조건으로 주차장을 빠르게 찾을 수 있습니다.
+- **핫스팟 시각화**: 주차 혼잡도를 히트맵으로 표시하여 한눈에 파악할 수 있습니다.
 
 ### 4. 💳 간편 결제 (PortOne 연동)
 
 - **실시간 결제**: 카카오페이, 신용카드 등 다양한 수단으로 주차비를 즉시 결제할 수 있습니다.
+- **쿠폰 시스템**: 할인 쿠폰을 적용하여 주차 요금을 절감할 수 있습니다.
 - **이용 내역 관리**: 언제 어디서 얼마를 썼는지 히스토리를 한눈에 볼 수 있습니다.
+
+### 5. 👤 마이페이지 (실서비스 수준)
+
+- **프로필 관리**: 이름, 이메일, 전화번호 수정
+- **차량 관리**: 차량 추가/삭제/대표 차량 설정
+- **결제수단 관리**: 카드 추가/삭제/기본 카드 설정
+- **쿠폰함**: 보유 쿠폰 조회 및 사용
+- **공지사항 & FAQ**: 서비스 안내 및 자주 묻는 질문
+- **알림 설정**: 마케팅, 주차 현황 알림 on/off
 
 ---
 
@@ -40,17 +51,23 @@
 
 ### Frontend
 
-- **Framework**: React (Vite 6)
+- **Framework**: React 18 + TypeScript
+- **Build Tool**: Vite 6
 - **Deployment**: Firebase Hosting
 - **PWA**: `vite-plugin-pwa`
-- **UI Library**: Shadcn/ui + TailwindCSS (v4)
+- **UI Library**: Shadcn/ui + TailwindCSS v4
 - **Data Visualization**: Recharts
+- **Map**: Kakao Map API
+- **Payment**: PortOne (Iamport)
 
 ### Backend & AI
 
 - **Framework**: FastAPI (Python 3.10+)
 - **Database**: SQLite (SQLAlchemy ORM)
-- **Tunneling**: Localtunnel (HTTPS 보안 통신 환경 구축)
+- **AI Engine**: Custom prediction algorithm (weather, holiday, historical data)
+- **External APIs**:
+  - 기상청 단기예보 API
+  - 한국천문연구원 공휴일 API
 
 ---
 
@@ -63,32 +80,99 @@
 
 ### 2. 개발 환경 설정
 
+#### Backend
+
 ```bash
-# Backend
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 5174
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
-# Frontend
+#### Frontend
+
+```bash
 npm install
 npm run dev
+```
+
+#### 환경 변수 설정
+
+`.env.local` 파일을 생성하고 다음 내용을 추가하세요:
+
+```env
+VITE_KAKAO_JS_KEY=your_kakao_javascript_key
+VITE_KAKAO_REST_KEY=your_kakao_rest_api_key
+VITE_WEATHER_API_KEY=your_weather_api_key
 ```
 
 ---
 
 ## ✅ 최신 업데이트 내역 (2026.01)
 
-- **[PWA]** 전용 아이콘 적용 및 오프라인 서비스 워커 구축 완료.
-- **[Deployment]** Firebase Hosting을 통한 실서비스 배포 성공.
-- **[AI Engine]** 기본 점유율(15%) 상향 및 가중치 반영 비율 최적화로 예측 다양성 확보.
-- **[Mobile]** HTTP/HTTPS Mixed Content 문제를 해결하기 위한 Localtunnel 보안 헤더 패치 완료.
-- **[UI/UX]** 천안시 공식 로고 적용 및 위치 권한 안내 가이드 UI 세분화.
+### UI/UX 개선
+
+- **[Premium Design]** 전체 앱 프리미엄 디자인 통일 (glass-card, premium-gradient 적용)
+- **[Logo]** 홈화면 로고 이미지 적용 (보라색 동그라미 → 실제 로고)
+- **[한글화]** 모든 페이지 한글화 완료 ("CURRENT DURATION" → "현재 주차 시간" 등)
+
+### 마이페이지 고도화
+
+- **[Profile]** 프로필 수정 기능 (이름/이메일/전화번호)
+- **[Vehicle]** 차량 관리 CRUD (추가/삭제/대표 설정)
+- **[Payment]** 결제수단 관리 CRUD (추가/삭제/기본 설정)
+- **[Coupon]** 쿠폰 시스템 및 결제 페이지 연동
+- **[Notice]** 공지사항, FAQ, 알림 설정 기능 추가
+
+### 기능 개선
+
+- **[PWA]** 전용 아이콘 적용 및 오프라인 서비스 워커 구축 완료
+- **[Deployment]** Firebase Hosting을 통한 실서비스 배포 성공
+- **[AI Engine]** 기본 점유율(15%) 상향 및 가중치 반영 비율 최적화로 예측 다양성 확보
+- **[Mobile]** HTTP/HTTPS Mixed Content 문제 해결 (Localtunnel 보안 헤더 패치)
+- **[Data]** 천안시 주차장 데이터 105개 전면 재처리 및 동기화 완료
+
+### 버그 수정
+
+- **[Map]** 카카오맵 Sheet 내 높이 계산 오류 수정
+- **[UI]** 차량 관리 UI 동적 로직 연동 완료
+- **[Payment]** 쿠폰 할인 계산 로직 정확도 개선
+
+---
+
+## 📁 프로젝트 구조
+
+```
+Cheonan_AI_Parking_Pass/
+├── backend/                 # FastAPI 백엔드
+│   ├── main.py             # API 엔드포인트
+│   ├── models.py           # 데이터베이스 모델
+│   └── dev.db              # SQLite 데이터베이스
+├── src/
+│   ├── app/
+│   │   ├── pages/          # 페이지 컴포넌트
+│   │   ├── components/     # 재사용 컴포넌트
+│   │   ├── data/           # Mock 데이터
+│   │   └── api.ts          # API 클라이언트
+│   └── styles/             # 스타일 파일
+├── public/                 # 정적 파일
+│   └── logo.jpg           # 앱 로고
+└── README.md              # 프로젝트 문서
+```
 
 ---
 
 ## 📝 라이선스
 
 This project is licensed under the MIT License.
+
+---
+
+## 🙏 감사의 말
+
+- **천안시청**: 주차장 정보 및 불법 주정차 단속 현황 데이터 제공
+- **기상청**: 단기예보 API 제공
+- **한국천문연구원**: 공휴일 정보 API 제공
+- **Kakao**: 카카오맵 API 제공
 
 ---
 

@@ -1,23 +1,21 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Search, MapPin, SlidersHorizontal, X, TrendingUp, Wallet, Building2, Car } from 'lucide-react';
-import { mockParkingLots, violationHotspotsWithCoords } from '../data/mockData';
+﻿import { useState, useEffect, useCallback } from 'react';
+import { Search, MapPin, ArrowLeft, X, Filter, Sparkles, Navigation } from 'lucide-react';
 import { api } from '../api';
 import { ParkingLot } from '../types';
-import { KakaoMap } from '../components/KakaoMap';
+import { mockParkingLots } from '../data/mockData';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
 } from '../components/ui/sheet';
-import { Label } from '../components/ui/label';
-import { Slider } from '../components/ui/slider';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { ParkingLotCard } from '../components/ParkingLotCard';
+import { KakaoMap } from '../components/KakaoMap';
 
 interface SearchPageProps {
   onBack: () => void;
@@ -26,134 +24,117 @@ interface SearchPageProps {
 
 export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'distance' | 'availability' | 'price'>('distance');
-  const [maxDistance, setMaxDistance] = useState([30]); // 기본값을 30km로 넉넉하게 설정 (전체 보기)
-  const [parkingType, setParkingType] = useState<'all' | 'public' | 'private'>('all');
-  const [showHotspots, setShowHotspots] = useState(false);
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('distance');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [targetLocation, setTargetLocation] = useState<{ lat: number; lon: number; name: string } | null>(null);
+  const [recentSearches, setRecentSearches] = useState(['신부동', '천안시청', '일로', '두정역']);
+  const [shouldCenterUser, setShouldCenterUser] = useState<number>(0);
+  const [locError, setLocError] = useState<string | null>(null);
 
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('recentSearches');
-      if (saved) {
-        setRecentSearches(JSON.parse(saved));
-      } else {
-        setRecentSearches(['불당동', '신부동', '터미널', '갤러리아']);
-      }
-    } catch (e) {
-      console.error("Failed to parse recent searches", e);
+  const handleSearch = (query: string) => {
+    if (!query.trim()) return;
+    
+    if (!recentSearches.includes(query)) {
+      setRecentSearches([query, ...recentSearches.slice(0, 4)]);
     }
-  }, []);
 
-  const saveSearch = (term: string) => {
-    if (!term.trim()) return;
-    const newSearches = [term, ...recentSearches.filter(s => s !== term)].slice(0, 10);
-    setRecentSearches(newSearches);
-    localStorage.setItem('recentSearches', JSON.stringify(newSearches));
-  };
-
-  const deleteSearch = (term: string) => {
-    const newSearches = recentSearches.filter(s => s !== term);
-    setRecentSearches(newSearches);
-    localStorage.setItem('recentSearches', JSON.stringify(newSearches));
-  };
-
-  // 거리 계산 함수 (Haversine formula)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // 지구 반지름 (km)
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Math.round(R * c * 10) / 10;
-  };
-
-  const handleSearch = (term: string) => {
-    if (!term.trim()) return;
-    setSearchQuery(term);
-    saveSearch(term);
-
-    // 1. 카카오 장소 검색 API 호출
-    if ((window as any).kakao?.maps?.services) {
-      const ps = new (window as any).kakao.maps.services.Places();
-      ps.keywordSearch(term, (data: any[], status: any) => {
-        if (status === (window as any).kakao.maps.services.Status.OK) {
-          // 장소 검색 성공 시 첫 번째 결과를 목적지로 설정
-          const place = data[0];
+    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+      const ps = new window.kakao.maps.services.Places();
+      ps.keywordSearch(query, (data: any, status: any) => {
+        if (status === window.kakao.maps.services.Status.OK) {
+          const first = data[0];
           setTargetLocation({
-            name: place.place_name,
-            lat: parseFloat(place.y),
-            lon: parseFloat(place.x),
+            lat: parseFloat(first.y),
+            lon: parseFloat(first.x),
+            name: first.place_name
           });
-          setSortBy('distance'); // 거리순 정렬 자동 선택
+          setShouldCenterUser(Date.now());
         } else {
-          // 장소 검색 실패 시 (일반 텍스트 검색)
           setTargetLocation(null);
         }
       });
     }
   };
 
+  const fetchData = async () => {
+    try {
+      const data = await api.getParkingLots();
+      setParkingLots(data.map(p => ({
+          ...p,
+          distance: p.distance ?? 0
+      })));
+    } catch (error) {
+      console.error("Failed to load parking lots:", error);
+      setParkingLots(mockParkingLots as any);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await api.getParkingLots();
-        // search page에서는 백엔드에서 받은 원본 거리(천안시청 기준)를 쓰거나 
-        // 여기서도 사용자 위치를 받아 재계산할수 있음. 
-        // 일단 백엔드 데이터를 신뢰 (distance가 이미 들어있음)
-        // 만약 거리가 없으면 0 처리
-        setParkingLots(data.map(p => ({
-            ...p,
-            distance: p.distance ?? 0
-        })));
-      } catch (error) {
-        console.error("Failed to load parking lots:", error);
-        // Fallback: mockData는 string id 등으로 수정되었는지 확인 필요. 
-        // mockData.ts 내용을 볼 수 없지만 일단 빈 배열 혹은 mock 그대로 사용
-        setParkingLots(mockParkingLots as any); // 타입 호환 강제
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+          setShouldCenterUser(Date.now());
+          setLocError(null);
+        },
+        (err) => {
+          console.warn('Geolocation failed in SearchPage:', err);
+          setLocError('위치 정보를 가져올 수 없습니다.');
+        }
+      );
+    }
+  }, []);
+
   const getFilteredAndSortedLots = () => {
-    // targetLocation이 있으면 거리를 재계산하여 매핑
     let filtered = parkingLots.map((lot) => {
-      // ParkingLot uses latitude/longitude, targetLocation uses lat/lon
-      if (targetLocation && lot.latitude && lot.longitude) {
-        const dist = calculateDistance(targetLocation.lat, targetLocation.lon, lot.latitude, lot.longitude);
-        return { ...lot, distance: dist };
+      const lat = Number(lot.latitude);
+      const lon = Number(lot.longitude);
+      
+      let baseLat = userLocation?.lat;
+      let baseLon = userLocation?.lon;
+      
+      if (targetLocation) {
+        baseLat = targetLocation.lat;
+        baseLon = targetLocation.lon;
+      }
+
+      if (baseLat && baseLon) {
+        const toRadians = (deg: number) => (deg * Math.PI) / 180;
+        const R = 6371;
+        const dLat = toRadians(lat - baseLat);
+        const dLon = toRadians(lon - baseLon);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRadians(baseLat)) *
+            Math.cos(toRadians(lat)) *
+            Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return { ...lot, distance: Math.round(R * c * 10) / 10 };
       }
       return lot;
     });
 
-    // Search filter
-    // targetLocation이 있으면(장소 검색 성공) 이름 필터링은 건너뜀 (목적지 주변 검색 모드)
+    // 검색 결과(targetLocation)가 있으면, 텍스트 필터링을 하지 않고 거리순으로만 보여줌 (주변 주차장 검색)
     if (searchQuery && !targetLocation) {
-      filtered = filtered.filter(lot =>
+      filtered = filtered.filter(lot => 
         lot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lot.address.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Type filter
-    if (parkingType !== 'all') {
-      filtered = filtered.filter(lot => lot.type === parkingType);
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter(lot => lot.type === selectedFilter);
     }
 
-    // Distance filter
-    filtered = filtered.filter(lot => (lot.distance ?? 0) <= maxDistance[0]);
-
-    // Sort
     filtered.sort((a, b) => {
       if (sortBy === 'distance') return (a.distance ?? 0) - (b.distance ?? 0);
       if (sortBy === 'availability') return (b.availableSpaces ?? 0) - (a.availableSpaces ?? 0);
@@ -171,29 +152,34 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
 
   const handleRecentSearch = (search: string) => {
     setSearchQuery(search);
+    handleSearch(search);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto p-4">
-          <div className="flex items-center gap-3 mb-3">
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Premium Header */}
+      <div className="bg-white/80 sticky top-0 z-20 px-4 py-4 border-b border-gray-100 backdrop-blur-md">
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center gap-4 mb-4">
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={onBack}
+              className="rounded-full bg-gray-50 hover:bg-gray-100"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1>주차장 검색</h1>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none">주차장 검색</h1>
+              <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase mt-0.5">Find Parking Lots</p>
+            </div>
           </div>
 
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
-                placeholder="주차장 이름, 지역 검색"
+                placeholder="장소, 건물명, 주차장 이름"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -201,12 +187,12 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
                     handleSearch(searchQuery);
                   }
                 }}
-                className="pl-10 pr-10"
+                className="pl-11 pr-10 h-12 rounded-xl bg-gray-50 border-none focus-visible:ring-1 focus-visible:ring-blue-100 shadow-inner"
               />
               {searchQuery && (
                 <button
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
                 >
                   <X className="w-4 h-4 text-gray-400" />
                 </button>
@@ -215,78 +201,33 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
 
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <SlidersHorizontal className="w-5 h-5" />
+                <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border-gray-100 bg-white">
+                  <Filter className="w-5 h-5 text-gray-600" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-xl">
-                <SheetHeader>
-                  <SheetTitle>필터 설정</SheetTitle>
+              <SheetContent side="bottom" className="rounded-t-3xl border-none">
+                <SheetHeader className="mb-6">
+                  <SheetTitle className="text-xl font-bold">정렬 및 필터</SheetTitle>
                 </SheetHeader>
-                
-                <div className="p-6 space-y-8">
-                  {/* 정렬 기준 */}
-                  <section>
-                    <Label className="text-base font-semibold text-gray-900 mb-4 block">정렬 기준</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => setSortBy(sortBy === 'availability' ? 'distance' : 'availability')}
-                        className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${
-                          sortBy === 'availability' 
-                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium ring-1 ring-blue-500' 
-                            : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <TrendingUp className="mb-2 w-6 h-6" />
-                        <span className="text-sm">여유 공간</span>
-                      </button>
-                      <button
-                        onClick={() => setSortBy(sortBy === 'price' ? 'distance' : 'price')}
-                        className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${
-                          sortBy === 'price' 
-                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium ring-1 ring-blue-500' 
-                            : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Wallet className="mb-2 w-6 h-6" />
-                        <span className="text-sm">저렴한 순</span>
-                      </button>
+                <div className="space-y-8 pb-10">
+                  <div className="space-y-4">
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-1">정렬 기준</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'distance', label: '가까운 순' },
+                        { id: 'availability', label: '여유 공간 순' },
+                        { id: 'price', label: '요금 저렴한 순' },
+                      ].map(item => (
+                        <Button
+                          key={item.id}
+                          variant={sortBy === item.id ? 'default' : 'outline'}
+                          onClick={() => setSortBy(item.id)}
+                          className={`rounded-xl px-5 ${sortBy === item.id ? 'bg-blue-600' : 'border-gray-100'}`}
+                        >
+                          {item.label}
+                        </Button>
+                      ))}
                     </div>
-                  </section>
-
-                  {/* 최대 거리 */}
-                  <section>
-                    <div className="flex justify-between items-center mb-4">
-                      <Label className="text-base font-semibold text-gray-900">최대 검색 거리</Label>
-                      <Badge variant="secondary" className="text-blue-700 bg-blue-100 px-3 py-1 text-sm font-bold rounded-full">
-                        {maxDistance[0]}km 이내
-                      </Badge>
-                    </div>
-                    <div className="px-2 py-2">
-                       <Slider
-                          value={maxDistance}
-                          onValueChange={setMaxDistance}
-                          max={30}
-                          min={1}
-                          step={1}
-                          className="py-4"
-                        />
-                    </div>
-                    <div className="flex justify-between mt-1 text-xs text-gray-400 font-medium px-1">
-                       <span>1km</span>
-                       <span>30km</span>
-                    </div>
-                  </section>
-
-
-                  
-                  {/* Action Button */}
-                  <div className="pt-4 pb-2">
-                    <SheetClose asChild>
-                      <Button className="w-full h-12 text-lg font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200">
-                        필터 적용하기
-                      </Button>
-                    </SheetClose>
                   </div>
                 </div>
               </SheetContent>
@@ -295,130 +236,69 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
         </div>
       </div>
 
-      {/* Map preview of results */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-lg mx-auto p-4 space-y-2">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>검색 결과 지도</span>
-            <div className="flex gap-2">
-              <Button variant={showHotspots ? 'default' : 'outline'} size="sm" onClick={() => setShowHotspots((v) => !v)}>
-                핫스팟 보기
-              </Button>
-            </div>
-          </div>
+      <div className="max-w-lg mx-auto pb-24">
+        {/* Map Section */}
+        <div className="p-4">
+          <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 h-[18rem] relative">
             <KakaoMap
               parkingLots={getFilteredAndSortedLots()}
-              height="12rem"
+              height="100%"
               onMarkerClick={onParkingSelect}
-              hotspots={violationHotspotsWithCoords}
-              showHotspots={showHotspots}
+              userLocation={userLocation}
               targetLocation={targetLocation}
+              shouldCenterUser={shouldCenterUser}
             />
+          </div>
         </div>
-      </div>
 
-      {/* Recent Searches */}
-      {!searchQuery && (
-        <div className="max-w-lg mx-auto p-4 bg-gray-50/50">
-          <p className="text-sm text-gray-500 mb-3">최근 검색어</p>
-          <div className="flex flex-wrap gap-2">
-            {recentSearches.map((search, index) => (
-              <div 
-                key={index} 
-                className="group flex items-center bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer"
-                  onClick={() => handleSearch(search)}
-              >
-                <span className="text-sm text-gray-700 mr-1">{search}</span>
-                <button
-                  className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteSearch(search);
-                  }}
-                  title="검색어 삭제"
-                >
-                  <X size={14} />
-                </button>
+        {/* Results */}
+        <div className="px-4 mt-4 space-y-4">
+          {!searchQuery && !targetLocation && (
+            <div className="mb-6">
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-1 mb-3">최근 검색어</h3>
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.map((s, i) => (
+                  <Badge
+                    key={i}
+                    variant="secondary"
+                    className="px-4 py-2 bg-white hover:bg-gray-100 text-gray-600 border border-gray-100 rounded-xl cursor-pointer"
+                    onClick={() => handleRecentSearch(s)}
+                  >
+                    {s}
+                  </Badge>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
 
-      {/* Results */}
-      <div className="max-w-lg mx-auto p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex flex-col gap-1">
-             <p className="text-sm text-gray-600">
-               총 {getFilteredAndSortedLots().length}개 검색됨
-             </p>
-             {targetLocation && (
-               <p className="text-xs text-blue-600 font-medium">
-                 📍 '{targetLocation.name}' 주변 주차장 ({maxDistance[0]}km 이내)
-               </p>
-             )}
+          <div className="flex items-center justify-between px-1 mb-2">
+            <h3 className="text-lg font-bold text-gray-900">
+              {targetLocation ? `'${targetLocation.name}' 인근 주차장` : '전체 주차장'}
+            </h3>
+            <span className="text-sm text-gray-400 font-medium">{getFilteredAndSortedLots().length}개 검색됨</span>
           </div>
-          <div className="flex gap-1 text-xs text-gray-500">
-            <span>정렬:</span>
-            <span className="text-blue-600">
-              {sortBy === 'distance' && '가까운 순'}
-              {sortBy === 'availability' && '여유 공간'}
-              {sortBy === 'price' && '저렴한 순'}
-            </span>
-          </div>
-        </div>
 
-        <div className="space-y-3">
           {loading ? (
-             <div className="text-center py-8 text-gray-500">데이터를 불러오는 중입니다...</div>
-          ) : (
-            getFilteredAndSortedLots().map((lot) => (
-              <Card
+             <div className="py-20 text-center">
+               <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+               <p className="text-gray-400">정보를 불러오는 중...</p>
+             </div>
+          ) : getFilteredAndSortedLots().length > 0 ? (
+            getFilteredAndSortedLots().map((lot, idx) => (
+              <ParkingLotCard
                 key={lot.id}
-                className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => onParkingSelect(lot.id)}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3>{lot.name}</h3>
-                      {lot.type === 'public' && (
-                        <Badge variant="outline" className="text-xs">공영</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-start gap-1 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      <p>{lot.address}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500 mb-1">잔여</p>
-                    <p className="text-blue-600">{lot.availableSpaces}대</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 mb-1">거리</p>
-                    <p>{lot.distance}km</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 mb-1">요금</p>
-                    <p>{lot.fee.basic.toLocaleString()}원</p>
-                  </div>
-                </div>
-              </Card>
+                lot={lot}
+                index={idx}
+                onClick={onParkingSelect}
+                isBest={idx === 0 && !searchQuery}
+              />
             ))
+          ) : (
+            <div className="py-20 text-center">
+              <p className="text-gray-400">검색 결과가 없습니다.</p>
+            </div>
           )}
         </div>
-
-        {!loading && getFilteredAndSortedLots().length === 0 && (
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="text-gray-500">검색 결과가 없습니다</p>
-            <p className="text-sm text-gray-400 mt-1">필터 조건을 변경하거나 검색어를 수정해보세요</p>
-          </div>
-        )}
       </div>
     </div>
   );
