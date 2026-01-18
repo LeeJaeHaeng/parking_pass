@@ -131,15 +131,21 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
     const fetchParkingLots = async () => {
       try {
         const data = await api.getParkingLots();
+        // 중복 제거 (ID 기준)
+        const uniqueData = Array.from(new Map(data.map(item => [item.id, item])).values());
+        
         // distance가 없는 경우 0 처리
-        let normalized = data.map((lot) => ({
+        let normalized = uniqueData.map((lot) => ({
           ...lot,
           distance: lot.distance ?? 0,
         }));
         setParkingLots(normalized);
       } catch (error) {
         console.error('Failed to fetch parking lots:', error);
-        setParkingLots((parkingLotsSource as any[]).map(normalizeLotFromJson));
+        // Fallback 시에도 중복 제거
+        const fallbackData = (parkingLotsSource as any[]).map(normalizeLotFromJson);
+        const uniqueFallback = Array.from(new Map(fallbackData.map(item => [item.id, item])).values());
+        setParkingLots(uniqueFallback);
       } finally {
         setLoading(false);
       }

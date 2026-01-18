@@ -179,7 +179,7 @@ export const api = {
       if (normalized.length >= 50) return normalized;
       return localLots;
     } catch (error) {
-      console.warn('Falling back to local parkingLotsSource:', error);
+      console.info('Using local parkingLotsSource (Offline/Fallback mode)');
       return localLots;
     }
   },
@@ -194,7 +194,7 @@ export const api = {
       if (!data) throw new Error('데이터가 없습니다.');
       return normalizeParkingLot(data);
     } catch (error) {
-      console.warn('Falling back to local parkingLotsSource:', error);
+      console.info('Falling back to local parkingLotsSource:', error);
       return localLots.find((lot) => lot.id === id) || localLots[0];
     }
   },
@@ -235,7 +235,7 @@ export const api = {
       if (!data) throw new Error('No weather data');
       return data;
     } catch (error) {
-      console.warn('Falling back to mock weather data:', error);
+      console.info('Falling back to mock weather data:', error);
       return {
         temperature: -2,
         condition: 'sunny',
