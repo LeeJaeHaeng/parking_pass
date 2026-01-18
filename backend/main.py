@@ -1,5 +1,5 @@
-﻿"""
-천안 AI 파킹 패스 - 백엔드 API
+"""
+천안시 AI 파킹패스 - 백엔드 API
 실제 CSV 데이터 + 불법주정차 패턴 + 날씨/휴일 정보 기반 AI 예측
 """
 import json
@@ -928,4 +928,5 @@ def delete_vehicle(vehicle_id: int, user_id: int, db: Session = Depends(get_db))
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
 

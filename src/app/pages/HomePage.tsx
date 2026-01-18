@@ -20,6 +20,8 @@ import { KakaoMap } from '../components/KakaoMap';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { calcDistanceKm, normalizeParkingLot } from '../utils/parking';
+import { config } from '../config';
 
 const EnvironmentTicker = ({ weather }: { weather: any }) => {
   if (!weather) return null;
@@ -143,7 +145,9 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
       } catch (error) {
         console.error('Failed to fetch parking lots:', error);
         // Fallback 시에도 중복 제거
-        const fallbackData = (parkingLotsSource as any[]).map(normalizeLotFromJson);
+        const fallbackData = (parkingLotsSource as any[]).map((lot) =>
+          normalizeParkingLot(lot)
+        );
         const uniqueFallback = Array.from(new Map(fallbackData.map(item => [item.id, item])).values());
         setParkingLots(uniqueFallback);
       } finally {
@@ -204,29 +208,6 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
     requestLocation();
   }, []);
 
-  const normalizeLotFromJson = (lot: any): ParkingLot => ({
-    id: lot.id?.toString() || '',
-    externalId: lot.id,
-    name: lot.name,
-    address: lot.address,
-    totalSpaces: Number(lot.totalSpaces) || 0,
-    availableSpaces: (lot.availableSpaces !== null && lot.availableSpaces !== undefined) 
-      ? Number(lot.availableSpaces) 
-      : Math.max(0, Math.round((Number(lot.totalSpaces) || 0) * 0.35)),
-    distance: Number(lot.distance) || 0,
-    fee: { 
-      type: lot.fee?.type || '무료',
-      basic: lot.fee?.basic ?? 0, 
-      additional: lot.fee?.additional ?? 0 
-    },
-    operatingHours: lot.operatingHours || '정보 없음',
-    latitude: Number(lot.latitude),
-    longitude: Number(lot.longitude),
-    type: lot.type || 'public',
-    feeInfo: lot.feeInfo,
-    prediction: [],
-  });
-
   useEffect(() => {
     const fetchWeather = async () => {
       try {
@@ -244,28 +225,24 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
 
     // 1. 거리 재계산 (현 위치 있을 경우 최우선 처리)
     if (userLocation) {
-      const toRadians = (deg: number) => (deg * Math.PI) / 180;
-      const EARTH_RADIUS_KM = 6371;
-      const calcDistance = (lat: number, lon: number) => {
-        const dLat = toRadians(lat - userLocation.lat);
-        const dLon = toRadians(lon - userLocation.lon);
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRadians(userLocation.lat)) *
-            Math.cos(toRadians(lat)) *
-            Math.sin(dLon / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
-      };
       processed = processed.map((lot) => {
-        const dist = calcDistance(lot.latitude, lot.longitude);
+        const dist = calcDistanceKm(
+          userLocation.lat,
+          userLocation.lon,
+          lot.latitude,
+          lot.longitude
+        );
         
         // AI 추천 점수 계산 (거리 50%, 가격 20%, 가용률 30%)
         const distScore = Math.max(0, 100 - (dist * 20)); // 5km 벗어나면 점수 급감
         const priceScore = lot.fee?.type === '무료' ? 100 : Math.max(0, 100 - (lot.fee?.basic / 100)); // 가격 비쌀수록 감점
         const availabilityRate = ((lot.availableSpaces ?? 0) / Math.max(1, lot.totalSpaces)) * 100;
         
-        const ai_score = (distScore * 0.5) + (priceScore * 0.2) + (availabilityRate * 0.3);
+        const weights = config.recommendationWeights;
+        const ai_score =
+          distScore * weights.distance +
+          priceScore * weights.price +
+          availabilityRate * weights.availability;
 
         return {
           ...lot,
@@ -297,22 +274,6 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
     return processed;
   };
 
-  const getOccupancyColor = (available: number, total: number) => {
-    const totalVal = Math.max(1, total);
-    const rate = (available / totalVal) * 100;
-    if (rate > 30) return 'text-green-600 bg-green-50';
-    if (rate > 10) return 'text-yellow-600 bg-yellow-50';
-    return 'text-red-600 bg-red-50';
-  };
-
-  const getOccupancyStatus = (available: number, total: number) => {
-    const totalVal = Math.max(1, total);
-    const rate = (available / totalVal) * 100;
-    if (rate > 30) return '여유';
-    if (rate > 10) return '보통';
-    return '혼잡';
-  };
-
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Environment Ticker */}
@@ -322,9 +283,9 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
       <div className="bg-white sticky top-0 z-20 px-4 py-4 border-b border-gray-100 backdrop-blur-md bg-white/80">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/logo.jpg" alt="AI 파킹 패스" className="w-10 h-10 rounded-xl shadow-lg" />
+            <img src="/logo.jpg" alt="천안시 AI 파킹패스" className="w-10 h-10 rounded-xl shadow-lg" />
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none">AI 파킹 패스</h1>
+              <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-none">천안시 AI 파킹패스</h1>
               <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase mt-0.5">천안 스마트시티</p>
             </div>
           </div>
@@ -475,3 +436,4 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
     </div>
   );
 }
+

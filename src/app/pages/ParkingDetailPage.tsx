@@ -36,6 +36,8 @@ import {
 } from 'recharts';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { getOccupancyBadgeClass, getOccupancyBarClass, getOccupancyStatus } from '../utils/parking';
+import { generatePredictionData } from '../data/mockData';
 
 interface ParkingDetailPageProps {
   parkingId: string;
@@ -100,23 +102,24 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
       setLoadingPred(true);
       try {
         const data = await api.getPredictions(parkingId, 24);
-        setPredictionData(data as any);
+        if (data && data.length > 0) {
+          setPredictionData(data as any);
+        } else {
+          setPredictionData(
+            generatePredictionData(parkingId, { hoursAhead: 24, weather: weather || undefined })
+          );
+        }
       } catch (e) {
         console.error("그래프 데이터 로드 실패:", e);
-        // 기존 데이터를 유지하여 그래프가 "사라지는" 현상 방지
+        setPredictionData(
+          generatePredictionData(parkingId, { hoursAhead: 24, weather: weather || undefined })
+        );
       } finally {
         setLoadingPred(false);
       }
     };
     load();
   }, [parkingId]);
-
-  const getOccupancyColor = (available: number, total: number) => {
-    const rate = (available / total) * 100;
-    if (rate > 30) return 'bg-green-500';
-    if (rate > 10) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
 
   const getPredictionForTime = (minutes: number) => {
     if (!predictionData || predictionData.length === 0) {
@@ -202,12 +205,12 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
               </div>
               <div className="text-right">
                 <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-wider ${
-                  (parking.availableSpaces / (parking.totalSpaces || 1)) > 0.3 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                  getOccupancyBadgeClass(parking.availableSpaces ?? 0, parking.totalSpaces || 1)
                 }`}>
                   <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                    (parking.availableSpaces / (parking.totalSpaces || 1)) > 0.3 ? 'bg-green-500' : 'bg-red-500'
+                    getOccupancyBarClass(parking.availableSpaces ?? 0, parking.totalSpaces || 1)
                   }`} />
-                  { (parking.availableSpaces / (parking.totalSpaces || 1)) > 0.3 ? '여유' : '혼잡' }
+                  {getOccupancyStatus(parking.availableSpaces ?? 0, parking.totalSpaces || 1)}
                 </div>
               </div>
             </div>
@@ -511,5 +514,3 @@ export default function ParkingDetailPage({ parkingId, onBack, onStartParking }:
       </motion.div>
     );
 }
-
-

@@ -18,8 +18,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: '천안 AI 파킹 패스',
-        short_name: 'AI파킹패스',
+        name: '천안시 AI 파킹패스',
+        short_name: '천안시AI파킹패스',
         description: 'AI 기반 주차 수요 예측 및 스마트 주차 결제 서비스',
         theme_color: '#2563eb',
         icons: [
@@ -44,3 +44,4 @@ export default defineConfig({
     },
   },
 })
+

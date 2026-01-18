@@ -4,6 +4,7 @@ import { MapPin, Sparkles, ChevronRight } from 'lucide-react';
 import { ParkingLot } from '../types';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
+import { getOccupancyBadgeClass, getOccupancyStatus } from '../utils/parking';
 
 interface ParkingLotCardProps {
   lot: ParkingLot;
@@ -14,21 +15,6 @@ interface ParkingLotCardProps {
 }
 
 export const ParkingLotCard = React.forwardRef<HTMLDivElement, ParkingLotCardProps>(({ lot, isBest, showPrediction, onClick, index }, ref) => {
-  // 혼잡도 상태 계산
-  const getOccupancyStatus = (available: number, total: number) => {
-    const rate = (available / total) * 100;
-    if (rate > 50) return '여유';
-    if (rate > 20) return '보통';
-    return '혼잡';
-  };
-
-  const getOccupancyColor = (available: number, total: number) => {
-    const rate = (available / total) * 100;
-    if (rate > 50) return 'bg-green-50 text-green-600';
-    if (rate > 20) return 'bg-yellow-50 text-yellow-600';
-    return 'bg-red-50 text-red-600';
-  };
-
   return (
     <motion.div
       ref={ref}
@@ -64,7 +50,7 @@ export const ParkingLotCard = React.forwardRef<HTMLDivElement, ParkingLotCardPro
               {lot.address}
             </div>
           </div>
-          <div className={`px-3 py-1.5 rounded-xl font-bold text-xs ${getOccupancyColor(lot.availableSpaces ?? 0, lot.totalSpaces || 1)}`}>
+          <div className={`px-3 py-1.5 rounded-xl font-bold text-xs ${getOccupancyBadgeClass(lot.availableSpaces ?? 0, lot.totalSpaces || 1)}`}>
             {getOccupancyStatus(lot.availableSpaces ?? 0, lot.totalSpaces || 1)}
           </div>
         </div>
@@ -110,4 +96,3 @@ export const ParkingLotCard = React.forwardRef<HTMLDivElement, ParkingLotCardPro
 });
 
 ParkingLotCard.displayName = "ParkingLotCard";
-

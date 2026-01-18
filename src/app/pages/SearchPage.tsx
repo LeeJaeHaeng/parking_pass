@@ -16,6 +16,7 @@ import {
 import { ScrollArea } from '../components/ui/scroll-area';
 import { ParkingLotCard } from '../components/ParkingLotCard';
 import { KakaoMap } from '../components/KakaoMap';
+import { calcDistanceKm } from '../utils/parking';
 
 interface SearchPageProps {
   onBack: () => void;
@@ -108,17 +109,10 @@ export default function SearchPage({ onBack, onParkingSelect }: SearchPageProps)
       }
 
       if (baseLat && baseLon) {
-        const toRadians = (deg: number) => (deg * Math.PI) / 180;
-        const R = 6371;
-        const dLat = toRadians(lat - baseLat);
-        const dLon = toRadians(lon - baseLon);
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRadians(baseLat)) *
-            Math.cos(toRadians(lat)) *
-            Math.sin(dLon / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return { ...lot, distance: Math.round(R * c * 10) / 10 };
+        return {
+          ...lot,
+          distance: calcDistanceKm(baseLat, baseLon, lat, lon),
+        };
       }
       return lot;
     });

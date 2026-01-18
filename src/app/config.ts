@@ -5,4 +5,9 @@
   kmaApiKey: import.meta.env.VITE_KMA_API_KEY || '',
   sbdcApiKey: import.meta.env.VITE_SBDC_API_KEY || '',
   holidayApiKey: import.meta.env.VITE_HOLIDAY_API_KEY || '',
+  recommendationWeights: {
+    distance: 0.5,
+    price: 0.2,
+    availability: 0.3,
+  },
 };

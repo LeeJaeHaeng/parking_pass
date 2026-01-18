@@ -1,8 +1,8 @@
-# 천안 AI 파킹 패스 (Cheonan AI Parking Pass) 🚗☁️
+# 천안시 AI 파킹패스 (Cheonan AI Parking Pass) 🚗☁️
 
 **천안시 주차 문제 해결을 위한 AI 기반 스마트 주차 통합 플랫폼**
 
-천안 AI 파킹 패스는 운전자들에게 실시간 주차 가능 여부를 AI로 예측하여 제공하고, 결제부터 내역 관리까지 한 번에 해결해주는 원스톱 주차 서비스입니다.
+천안시 AI 파킹패스는 운전자들에게 실시간 주차 가능 여부를 AI로 예측하여 제공하고, 결제부터 내역 관리까지 한 번에 해결해주는 원스톱 주차 서비스입니다.
 
 ### 🌐 실서비스 주소
 
@@ -76,6 +76,76 @@
 - **External APIs**:
   - 기상청 단기예보 API
   - 한국천문연구원 공휴일 API
+
+---
+
+## 🔍 데이터 기반 분석 로직 (상세)
+
+### 1) 데이터 소스
+- **주차장 기본 데이터**: 공공 데이터 CSV를 전처리하여 `parkingLots.json` 생성
+- **불법주정차 패턴 데이터**: 단속 CSV 분석으로 시간/요일/동(지역) 가중치 추출
+- **실시간/동적 보정 요소**: 날씨(기온/강수/하늘 상태), 공휴일 여부
+
+### 2) 주차장 데이터 정규화 (프론트/백엔드 공통 정책)
+- **좌표 및 기본 필드 정리**: 위경도, 주소, 운영시간, 요금 구조 통일
+- **가용 공간 폴백**: 실시간 데이터가 없으면 `총 주차면 * 0.35` 기준으로 가용 공간 추정
+- **거리 계산**: 기준 좌표(천안시청 인근) 또는 사용자 위치 기준으로 Haversine 거리 계산
+
+### 3) 혼잡도 예측 엔진 (백엔드)
+- **가중치 구성**
+  - 시간대(hourly), 요일(daily), 지역(dong), 요금(fee), 수용(capacity), 날씨(weather), 공휴일(holiday), 핫스팟 근접도(proximity)
+- **기본 점유율 + 가중치 보정**
+  - 기본 점유율(15%)에서 시작해 가중치를 합산하여 5%~95%로 클램핑
+- **실시간 변동성**
+  - 시간 기반 seed를 사용한 랜덤 워크로 실시간 변동 시뮬레이션
+
+### 4) 예측 데이터 생성 흐름
+1. 주차장 ID 기준 데이터 로딩
+2. 현재 시각/요일/동(주소 파싱) 추출
+3. 날씨/공휴일 캐시 업데이트
+4. 가중치 합산 → 점유율/신뢰도 계산
+5. 시간대별(최대 24시간) 예측 시계열 생성
+
+### 5) 프론트 폴백 예측 로직
+- **백엔드 실패 시** 클라이언트에서 시간대 패턴 + 요일 + 날씨 조건을 반영한 폴백 생성
+- **신뢰도**는 가까운 시간일수록 높게 설정
+
+### 6) AI 추천 점수 (프론트)
+- **거리(50%) + 가격(20%) + 가용률(30%)** 가중치 기반 추천 점수 계산
+- 이 가중치는 `config.ts`에서 중앙 관리 가능
+
+### 7) 혼잡도 상태 기준 (UI 공통)
+- **여유**: 가용률 30% 초과
+- **보통**: 10% 초과 ~ 30% 이하
+- **혼잡**: 10% 이하
+
+### 8) 로직 추적 (핵심 파일/함수)
+- **예측 엔진 (백엔드)**: `backend/main.py` → `PredictionEngine.generate_predictions`, `PredictionEngine.calculate_occupancy`
+- **패턴 추출(불법주정차)**: `backend/violation_analyzer.py` → `analyze_violations`, `normalize_patterns`
+- **주차장 데이터 전처리**: `backend/csv_parser.py` → `run` (CSV → `src/app/data/parkingLots.json`)
+- **프론트 예측 폴백**: `src/app/data/mockData.ts` → `generatePredictionData`
+- **주차장 정규화/거리 계산**: `src/app/utils/parking.ts` → `normalizeParkingLot`, `calcDistanceKm`
+- **추천 점수 계산**: `src/app/pages/HomePage.tsx` → `ai_score` 계산 블록
+- **환경/가중치 설정**: `src/app/config.ts` → `recommendationWeights`
+
+### 9) 분석/추천 파라미터 요약
+
+| 영역 | 파라미터 | 값 | 설명 |
+| --- | --- | --- | --- |
+| 예측(백엔드) | `WEIGHTS.hourly` | 0.25 | 시간대 가중치 |
+| 예측(백엔드) | `WEIGHTS.daily` | 0.10 | 요일 가중치 |
+| 예측(백엔드) | `WEIGHTS.location` | 0.15 | 지역(동) 가중치 |
+| 예측(백엔드) | `WEIGHTS.proximity` | 0.15 | 핫스팟 근접 가중치 |
+| 예측(백엔드) | `WEIGHTS.fee` | 0.10 | 요금 가중치 |
+| 예측(백엔드) | `WEIGHTS.capacity` | 0.10 | 수용량 가중치 |
+| 예측(백엔드) | `WEIGHTS.weather` | 0.10 | 날씨 가중치 |
+| 예측(백엔드) | `WEIGHTS.holiday` | 0.05 | 휴일 가중치 |
+| 추천(프론트) | `recommendationWeights.distance` | 0.5 | 거리 점수 비중 |
+| 추천(프론트) | `recommendationWeights.price` | 0.2 | 가격 점수 비중 |
+| 추천(프론트) | `recommendationWeights.availability` | 0.3 | 가용률 점수 비중 |
+| UI 기준 | 가용률 `> 30%` | 여유 | 혼잡도 상태 |
+| UI 기준 | 가용률 `> 10%` | 보통 | 혼잡도 상태 |
+| UI 기준 | 가용률 `<= 10%` | 혼잡 | 혼잡도 상태 |
 
 ---
 
@@ -185,3 +255,4 @@ This project is licensed under the MIT License.
 ---
 
 **Cheonan AI Parking Pass Team** - 천안시 주차 문제, AI로 시원하게 뚫어드립니다! 💨
+

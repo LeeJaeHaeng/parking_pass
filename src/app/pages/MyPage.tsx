@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ChevronRight, Car, CreditCard, Bell, Settings, CircleHelp, LogOut, Award, Clock, User, Phone, Mail, Plus, Trash2, Check, FileText, Shield, Sparkles } from 'lucide-react';
 import { mockVehicle } from '../data/mockData';
 import { Button } from '../components/ui/button';
@@ -30,34 +30,43 @@ import {
 } from '../components/ui/dialog';
 
 interface MyPageProps {
+  user: any; // App.tsx의 User 타입과 맞추기 위해 any 사용 (순환 참조 방지 또는 별도 types.ts 필요)
   onHistoryClick: () => void;
   onLogout: () => void;
 }
 
-export default function MyPage({ onHistoryClick, onLogout }: MyPageProps) {
-  const [userProfile, setUserProfile] = useState({ name: '홍길동', email: 'hong@example.com', phone: '010-1234-5678' });
+export default function MyPage({ user, onHistoryClick, onLogout }: MyPageProps) {
+  const [userProfile, setUserProfile] = useState({ 
+      name: user?.name || '사용자', 
+      email: user?.email || 'user@example.com', 
+      phone: '010-0000-0000' 
+  });
   const [tempProfile, setTempProfile] = useState(userProfile);
   const [notifications, setNotifications] = useState({ marketing: true, parking: true, bill: false });
-  const [vehicles, setVehicles] = useState([
-    { ...mockVehicle, isDefault: true, id: 'v1' },
-    { licensePlate: '56너 7890', model: '기아 EV6', color: '그레이', isDefault: false, id: 'v2' }
-  ]);
+  
+  // App.tsx에서 전달받은 user.vehicles 사용, 없으면 빈 배열
+  const [vehicles, setVehicles] = useState<any[]>(user?.vehicles || []);
+  
+  // App.tsx에서 전달받은 user.paymentMethods 사용, 없으면 빈 배열
+  const [paymentMethods, setPaymentMethods] = useState<any[]>(user?.paymentMethods || []);
+
   const [coupons, setCoupons] = useState([
     { id: 'c1', name: '웰컴 할인 쿠폰', discount: 2000, type: 'fixed', expiry: '2025.12.31', used: false },
     { id: 'c2', name: '첫 주차 감사 쿠폰', discount: 10, type: 'percent', expiry: '2025.06.30', used: false }
   ]);
-  const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, name: '신한카드', number: '1234-****-****-5678', isDefault: true },
-    { id: 2, name: '카카오페이', number: '연동됨', isDefault: false }
-  ]);
+  
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
   const [newPayment, setNewPayment] = useState({ name: '', number: '' });
   const [historyFilter, setHistoryFilter] = useState<'all' | 'month' | 'year'>('all');
   const [newVehicle, setNewVehicle] = useState({ licensePlate: '', model: '', color: '' });
 
-  const totalParkingCount = 47;
-  const totalSpent = 142500;
+  const totalParkingCount = 0; // 아직 실제 이용 내역 연동 전
+  const totalSpent = 0;
+
+  // vehicles가 비어있을 때 처리를 위해 렌더링 시 안전장치 추가 필요
+  // (아래 JSX에서 vehicles[0] 접근 시 에러 방지)
+  const defaultVehicle = vehicles.find((v: any) => v.isDefault) || vehicles[0];
 
   const handleUpdateProfile = () => {
     setUserProfile(tempProfile);
@@ -222,10 +231,16 @@ export default function MyPage({ onHistoryClick, onLogout }: MyPageProps) {
                   <Car className="w-7 h-7" />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="mb-0.5 font-black text-gray-900 text-lg">{vehicles.find(v => v.isDefault)?.licensePlate || vehicles[0].licensePlate}</p>
-                  <p className="text-sm text-gray-500 font-medium">{(vehicles.find(v => v.isDefault) || vehicles[0]).model}  {(vehicles.find(v => v.isDefault) || vehicles[0]).color}</p>
+                  {defaultVehicle ? (
+                      <>
+                        <p className="mb-0.5 font-black text-gray-900 text-lg">{defaultVehicle.licensePlate}</p>
+                        <p className="text-sm text-gray-500 font-medium">{defaultVehicle.model} {defaultVehicle.color}</p>
+                      </>
+                  ) : (
+                      <p className="text-gray-400 font-bold">등록된 차량이 없습니다</p>
+                  )}
                 </div>
-                <Badge className="bg-blue-600 text-white border-none py-1.5 rounded-lg text-[10px]">대표</Badge>
+                {defaultVehicle && <Badge className="bg-blue-600 text-white border-none py-1.5 rounded-lg text-[10px]">대표</Badge>}
               </div>
             </div>
           </SheetTrigger>
@@ -329,7 +344,7 @@ export default function MyPage({ onHistoryClick, onLogout }: MyPageProps) {
                     {[
                       { title: '설 연휴 공영주차장 무료 개방 안내', date: '2025.01.10' },
                       { title: '시스템 정기 점검 안내 (1/15 02:00 ~ 04:00)', date: '2025.01.05' },
-                      { title: 'AI 파킹 패스 1.0 정식 버전 업데이트 노트', date: '2025.01.01' }
+                      { title: '천안시 AI 파킹패스 1.0 정식 버전 업데이트 노트', date: '2025.01.01' }
                     ].map((notice, i) => (
                       <div key={i} className="p-5 border-b border-gray-50 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer">
                         <p className="font-bold text-gray-800 mb-1">{notice.title}</p>
@@ -598,7 +613,7 @@ export default function MyPage({ onHistoryClick, onLogout }: MyPageProps) {
                    <p className="text-xs text-slate-400">최종 수정일: 2025.03.01</p>
                  </SheetHeader>
                  <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
-                   <p><strong>제 1 조 (목적)</strong><br />본 약관은 회사가 운영하는 "천안 AI 파킹 패스"에서 제공하는 주차 관련 서비스의 이용 조건 및 절차를 규정함을 목적으로 합니다.</p>
+                   <p><strong>제 1 조 (목적)</strong><br />본 약관은 회사가 운영하는 "천안시 AI 파킹패스"에서 제공하는 주차 관련 서비스의 이용 조건 및 절차를 규정함을 목적으로 합니다.</p>
                    {/* ...약관 생략... */}
                  </div>
                </SheetContent>
@@ -640,3 +655,4 @@ export default function MyPage({ onHistoryClick, onLogout }: MyPageProps) {
     </div>
   );
 }
+

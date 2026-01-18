@@ -1,9 +1,9 @@
 import { ParkingLot, PredictionData, PatternsSummary } from './types';
 import { config } from './config';
 import parkingLotsSource from './data/parkingLots.json';
+import { DEFAULT_CENTER, normalizeParkingLot } from './utils/parking';
 
 const API_BASE_URL = config.apiBaseUrl;
-const center = { lat: 36.815, lon: 127.113 };
 
 export interface AuthPayload {
   email: string;
@@ -37,87 +37,6 @@ export interface PaymentRecord {
   fee: number;
   date: string;
 }
-
-const toRadians = (deg: number) => (deg * Math.PI) / 180;
-
-const calcDistanceKm = (lat: number, lon: number) => {
-  if (!lat || !lon) return 0;
-  const dLat = toRadians(lat - center.lat);
-  const dLon = toRadians(lon - center.lon);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(center.lat)) *
-      Math.cos(toRadians(lat)) *
-      Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(6371 * c * 10) / 10;
-};
-
-const normalizeParkingLot = (raw: any): ParkingLot => {
-  if (!raw) {
-    return {
-      id: '',
-      name: '정보 없음',
-      address: '',
-      totalSpaces: 0,
-      availableSpaces: 0,
-      distance: 0,
-      fee: { type: '정보 없음', basic: 0, basicTime: 0, additional: 0, additionalTime: 0, daily: 0, monthly: 0 },
-      operatingHours: '정보 없음',
-      latitude: 0,
-      longitude: 0,
-      type: 'private',
-      facilities: []
-    };
-  }
-
-  const lat = Number(raw.latitude) || 0;
-  const lon = Number(raw.longitude) || 0;
-  
-  return {
-    id: raw.id?.toString() || '',
-    externalId: raw.externalId,
-    name: raw.name || '이름 없음',
-    address: raw.address || '',
-    totalSpaces: Number(raw.totalSpaces) || 0,
-    availableSpaces: (raw.availableSpaces !== null && raw.availableSpaces !== undefined) 
-      ? Number(raw.availableSpaces) 
-      : Math.max(0, Math.round((Number(raw.totalSpaces) || 0) * 0.35)),
-    distance: (raw.distance !== null && raw.distance !== undefined) 
-      ? Number(raw.distance) 
-      : calcDistanceKm(lat, lon),
-    fee: {
-      type: raw.fee?.type || '정보 없음',
-      basic: Number(raw.fee?.basic) || 0,
-      basicTime: Number(raw.fee?.basicTime) || 30,
-      additional: Number(raw.fee?.additional) || 0,
-      additionalTime: Number(raw.fee?.additionalTime) || 10,
-      daily: Number(raw.fee?.daily) || 0,
-      monthly: Number(raw.fee?.monthly) || 0,
-    },
-    operatingHours: raw.operatingHours || '정보 없음',
-    operatingDays: raw.operatingDays || '',
-    latitude: lat,
-    longitude: lon,
-    feeInfo: raw.feeInfo,
-    type: raw.type === 'public' ? 'public' : 'private',
-    parkingType: raw.parkingType,
-    hasDisabledParking: raw.hasDisabledParking,
-    managingOrg: raw.managingOrg,
-    phone: raw.phone,
-    paymentMethods: raw.paymentMethods,
-    facilities: Array.isArray(raw.facilities) ? raw.facilities : [],
-    dataDate: raw.dataDate,
-    prediction: Array.isArray(raw.prediction)
-      ? raw.prediction.map((item: any) => ({
-          time: item.time || '',
-          occupancyRate: Number(item.occupancy_rate ?? item.occupancyRate) || 0,
-          confidence: Number(item.confidence) || 0,
-          factors: item.factors,
-        }))
-      : undefined,
-  };
-};
 
 const getStoredToken = () => {
   if (typeof window === 'undefined') return undefined;
@@ -159,7 +78,7 @@ async function safeFetch(url: string, options?: RequestInit) {
     return response.json();
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      throw new Error('서버 연결 실패 (시간 초과).');
+      throw new Error('서버 연결 시간이 초과되었습니다. (백엔드가 실행 중인지 확인해주세요)');
     }
     throw error;
   }
@@ -170,11 +89,13 @@ export const api = {
     // 로컬 JSON 데이터 (CSV에서 파싱된 실제 데이터)
     const localLots = (parkingLotsSource as any[])
       .filter((lot) => lot.latitude && lot.longitude && lot.name)
-      .map(normalizeParkingLot);
+      .map((lot) => normalizeParkingLot(lot, { baseCoord: DEFAULT_CENTER }));
     
     try {
       const data = await safeFetch(`${API_BASE_URL}/parking-lots`);
-      const normalized = Array.isArray(data) ? data.map(normalizeParkingLot) : [];
+      const normalized = Array.isArray(data)
+        ? data.map((lot) => normalizeParkingLot(lot, { baseCoord: DEFAULT_CENTER }))
+        : [];
       // 백엔드에서 충분한 데이터를 주면 사용, 아니면 로컬 데이터
       if (normalized.length >= 50) return normalized;
       return localLots;
@@ -187,12 +108,12 @@ export const api = {
   async getParkingLot(id: string): Promise<ParkingLot> {
     const localLots = (parkingLotsSource as any[])
       .filter((lot) => lot.latitude && lot.longitude)
-      .map(normalizeParkingLot);
+      .map((lot) => normalizeParkingLot(lot, { baseCoord: DEFAULT_CENTER }));
     
     try {
       const data = await safeFetch(`${API_BASE_URL}/parking-lots/${id}`);
       if (!data) throw new Error('데이터가 없습니다.');
-      return normalizeParkingLot(data);
+      return normalizeParkingLot(data, { baseCoord: DEFAULT_CENTER });
     } catch (error) {
       console.info('Falling back to local parkingLotsSource:', error);
       return localLots.find((lot) => lot.id === id) || localLots[0];

@@ -1,33 +1,47 @@
 import { ParkingLot, PredictionData, ParkingHistory, Vehicle } from '../types';
 import parkingLotsSource from './parkingLots.json';
 import violationSummary from './violationSummary.json';
-
-const toRadians = (deg: number) => (deg * Math.PI) / 180;
-const EARTH_RADIUS_KM = 6371;
-const center = { lat: 36.815, lon: 127.113 }; // 천안시청 근처 기준점
-
-const calcDistanceKm = (lat: number, lon: number) => {
-  if (!lat || !lon) return 0;
-  const dLat = toRadians(lat - center.lat);
-  const dLon = toRadians(lon - center.lon);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(center.lat)) *
-      Math.cos(toRadians(lat)) *
-      Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
-};
+import { calcDistanceKm, DEFAULT_CENTER } from '../utils/parking';
 
 /**
  * 시간대별 예측 데이터 생성 (클라이언트 폴백용)
  * 실제 예측은 백엔드 API에서 불법주정차 패턴 기반으로 수행
  */
-export const generatePredictionData = (parkingId: string): PredictionData[] => {
+type PredictionContext = {
+  hoursAhead?: number;
+  weather?: {
+    condition?: string;
+    precipitationProbability?: number;
+    temperature?: number;
+  };
+  isHoliday?: boolean;
+};
+
+export const generatePredictionData = (
+  parkingId: string,
+  context: PredictionContext = {}
+): PredictionData[] => {
   const now = new Date();
   const data: PredictionData[] = [];
+  const hoursAhead = context.hoursAhead ?? 24;
 
-  for (let i = 0; i < 24; i++) {
+  const dayWeights = [1.0, 0.9, 0.92, 0.95, 0.98, 1.0, 1.05];
+  let dayWeight = dayWeights[now.getDay()] || 1.0;
+  if (context.isHoliday) dayWeight += 0.08;
+
+  const weather = context.weather;
+  let weatherBoost = 0;
+  if (weather?.condition === 'rainy' || weather?.condition === 'snowy') {
+    weatherBoost += 0.08;
+  }
+  if ((weather?.precipitationProbability ?? 0) >= 60) {
+    weatherBoost += 0.05;
+  }
+  if ((weather?.temperature ?? 0) >= 30 || (weather?.temperature ?? 0) <= -5) {
+    weatherBoost += 0.04;
+  }
+
+  for (let i = 0; i < hoursAhead; i++) {
     const hour = (now.getHours() + i) % 24;
     let baseOccupancy = 50;
 
@@ -41,6 +55,7 @@ export const generatePredictionData = (parkingId: string): PredictionData[] => {
     
     const weight = hourlyWeights[hour] || 0.5;
     baseOccupancy = 40 + weight * 55;
+    baseOccupancy = baseOccupancy * dayWeight + weatherBoost * 100;
     baseOccupancy = Math.max(10, Math.min(95, baseOccupancy));
 
     // 신뢰도: 가까운 시간일수록 높음
@@ -70,7 +85,7 @@ export const mockParkingLots: ParkingLot[] = (parkingLotsSource as any[])
       address: p.address || '',
       totalSpaces: Number(p.totalSpaces) || 0,
       availableSpaces: p.availableSpaces ?? Math.max(1, Math.round((Number(p.totalSpaces) || 50) * 0.35)),
-      distance: calcDistanceKm(lat, lon),
+      distance: calcDistanceKm(DEFAULT_CENTER.lat, DEFAULT_CENTER.lon, lat, lon),
       fee: {
         type: p.fee?.type || '무료',
         basic: p.fee?.basic ?? 0,
