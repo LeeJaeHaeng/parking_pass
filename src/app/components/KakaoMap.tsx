@@ -34,7 +34,7 @@ const kakaoLoader = (() => {
         return;
       }
       const script = document.createElement('script');
-      script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${config.kakaoJsKey}&autoload=false&libraries=services`;
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${config.kakaoJsKey}&autoload=false&libraries=services`;
       script.async = true;
       script.onload = () => {
         if (!window.kakao) {
@@ -43,7 +43,7 @@ const kakaoLoader = (() => {
         }
         window.kakao.maps.load(() => resolve());
       };
-      script.onerror = () => reject(new Error('Kakao SDK script error'));
+      script.onerror = () => reject(new Error('카카오 지도 로드 실패. (AdBlock 해제 또는 도메인 등록 확인 필요)'));
       document.head.appendChild(script);
     });
     return promise;
