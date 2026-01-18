@@ -149,9 +149,9 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
 
   // 초기 로딩 시 사용자 위치 자동 확보
   useEffect(() => {
-    const requestLocation = () => {
+    const requestLocation = (retryLowAccuracy = false) => {
       if (navigator.geolocation) {
-        console.log('[위치정보] 위치 요청 시작...');
+        console.log(`[위치정보] 위치 요청 시작... (정확도: ${retryLowAccuracy ? '낮음' : '높음'})`);
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             console.log('[위치정보] 성공:', pos.coords.latitude, pos.coords.longitude);
@@ -160,29 +160,35 @@ export default function HomePage({ onParkingSelect, onSearchClick }: HomePagePro
             setLocError(null);
           },
           (err) => {
-            console.error('[위치정보] 오류 발생:', err);
-            console.error('[위치정보] 오류 코드:', err.code);
-            console.error('[위치정보] 오류 메시지:', err.message);
+            console.error('[위치정보] 오류 발생:', err.code, err.message);
+            
+            // 타임아웃(3)이고 아직 고정확도 시도 중이었다면 -> 저정확도로 재시도
+            if (err.code === err.TIMEOUT && !retryLowAccuracy) {
+              console.warn('[위치정보] 타임아웃 발생. 저정확도 모드로 재시도합니다.');
+              requestLocation(true);
+              return;
+            }
+
             let msg = '위치 정보를 가져올 수 없습니다.';
             switch(err.code) {
               case err.PERMISSION_DENIED:
-                msg = '위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.';
-                console.error('[위치정보] 권한 거부됨');
+                msg = '위치 권한이 거부되었습니다.';
                 break;
               case err.POSITION_UNAVAILABLE:
                 msg = '위치 정보를 사용할 수 없습니다.';
-                console.error('[위치정보] 위치 사용 불가');
                 break;
               case err.TIMEOUT:
                 msg = '위치 정보 획득 시간이 초과되었습니다.';
-                console.error('[위치정보] 타임아웃');
                 break;
             }
-            console.warn(msg, err);
             setLocError(msg);
-            setSelectedFilter('all');
+            setSelectedFilter('all'); // 위치 실패 시 기본 필터로
           },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          { 
+            enableHighAccuracy: !retryLowAccuracy, 
+            timeout: 20000, // 20초로 증가
+            maximumAge: 10000 // 10초 내 캐시된 위치 허용
+          }
         );
       } else {
         setLocError('브라우저가 위치 정보를 지원하지 않습니다.');

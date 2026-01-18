@@ -60,6 +60,7 @@ export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, hei
   const parkingMarkersRef = useRef<any[]>([]);
   const hotspotCirclesRef = useRef<any[]>([]);
   const [lastAddrLoc, setLastAddrLoc] = useState<{lat: number, lon: number} | null>(null);
+  const lastAddrTimeRef = useRef<number>(0);
 
   const centerCoord = (() => {
     if (targetLocation) return targetLocation;
@@ -178,13 +179,22 @@ export function KakaoMap({ parkingLots, hotspots = [], showHotspots = false, hei
 
         // 주소 변환 (디바운싱: 10m 이상 이동 시에만 호출)
         if (onAddressFound) {
+            const now = Date.now();
+            // 거리 체크 (약 10m)
             const dist = lastAddrLoc ? Math.abs(lastAddrLoc.lat - userLocation.lat) + Math.abs(lastAddrLoc.lon - userLocation.lon) : 1;
-            if (dist > 0.0001) { // 약 10m 이상
+            
+            // 시간 체크 (3초) AND 거리 체크
+            if (dist > 0.0001 && (now - lastAddrTimeRef.current > 3000)) { 
                 const geocoder = new window.kakao.maps.services.Geocoder();
                 geocoder.coord2Address(userLocation.lon, userLocation.lat, (result: any, st: any) => {
                    if (st === window.kakao.maps.services.Status.OK) {
                        onAddressFound(result[0]?.address?.address_name || '주소 정보 없음');
                        setLastAddrLoc(userLocation);
+                       lastAddrTimeRef.current = now;
+                   } else {
+                       // 에러 발생 시 (e.g. 429) 잠시 후 재시도를 위해 시간만 갱신하거나 로그 출력
+                       console.warn('Address conversion failed:', st);
+                       lastAddrTimeRef.current = now; // 실패해도 쿨타임 적용
                    }
                 });
             }
